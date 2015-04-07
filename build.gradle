@@ -1,0 +1,26 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'antlr'
+
+jar {
+  baseName = 'ByteScheme'
+  version = '0.0.1'
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile('org.antlr:antlr4-runtime:4.5')
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '2.2.1'
+}
