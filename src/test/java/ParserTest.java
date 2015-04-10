@@ -25,7 +25,7 @@ public class ParserTest {
     }
 
     @Test
-    public void it_is_possible_to_define_variables() {
+    public void it_is_possible_to_define_a_variable() {
         visitParseTreeForInput("(define a_variable 51)");
 
         Assert.assertThat(parserTestVisitor.variableDefinitions.size(), is(1));
