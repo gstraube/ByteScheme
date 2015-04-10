@@ -8,37 +8,36 @@ form: definition
 
 definition: variable_definition;
 
-variable_definition: '(' 'define' variable expression ')';
-
-variable: identifier;
+variable_definition: '(' 'define' IDENTIFIER expression ')';
 
 expression: constant
-          | variable
+          | IDENTIFIER
           ;
 
-constant: number;
+constant: NUMBER;
 
-identifier: initial subsequent*
+IDENTIFIER: INITIAL SUBSEQUENT*
           | '+'
           | '-'
           | '...'
           ;
 
-initial: letter | '!' | '$' | '%' | '&' | '*' | '/' | ':' | '<' | '=' | '>' | '?' | '~' | '_' | '^';
+INITIAL: LETTER
+       | SPECIAL_CHARACTER;
 
-subsequent: initial
-          | digit
-          | '.'
-          | '+'
-          | '-'
+SUBSEQUENT: INITIAL
+          | DIGIT
+          | OTHER_SUBSEQUENT_CHAR
           ;
 
-number: digit+;
-
-letter: LETTER;
-
-digit: DIGIT;
+NUMBER: DIGIT+;
 
 LETTER: [a-z];
 
 DIGIT: [0-9];
+
+SPECIAL_CHARACTER: '!' | '$' | '%' | '&' | '*' | '/' | ':' | '<' | '=' | '>' | '?' | '~' | '_' | '^';
+
+OTHER_SUBSEQUENT_CHAR: '.' | '+' | '-';
+
+WHITESPACE: [ \n\t\r]+ -> skip;
