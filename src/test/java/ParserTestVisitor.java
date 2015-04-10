@@ -34,7 +34,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<Void> {
         if (variableDefinitions.containsKey(identifier)) {
             return variableDefinitions.get(identifier);
         }
-        throw new RuntimeException("Unknown identifier");
+        throw new RuntimeException("Undefined variable");
     }
 
     private String getConstantFromContext(SchemeParser.ConstantContext constantContext) {
