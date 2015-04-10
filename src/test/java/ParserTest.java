@@ -21,7 +21,15 @@ public class ParserTest {
         visitParseTreeForInput("42");
 
         Assert.assertThat(parserTestVisitor.constants.size(), is(1));
-        Assert.assertThat(parserTestVisitor.constants.get(0), is(42));
+        Assert.assertThat(parserTestVisitor.constants.get(0), is("42"));
+    }
+
+    @Test
+    public void it_is_possible_to_define_variables() {
+        visitParseTreeForInput("(define a_variable 51)");
+
+        Assert.assertThat(parserTestVisitor.variableDefinitions.size(), is(1));
+        Assert.assertThat(parserTestVisitor.variableDefinitions.get("a_variable"), is("51"));
     }
 
     private void visitParseTreeForInput(String input) {

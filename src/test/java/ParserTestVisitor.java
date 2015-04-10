@@ -1,9 +1,12 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ParserTestVisitor extends SchemeBaseVisitor<Void> {
 
-    List<Integer> constants = new ArrayList<>();
+    List<String> constants = new ArrayList<>();
+    public Map<String, String> variableDefinitions = new HashMap<>();
 
     @Override
     public Void visitConstant(SchemeParser.ConstantContext constantContext) {
@@ -11,16 +14,31 @@ public class ParserTestVisitor extends SchemeBaseVisitor<Void> {
         return super.visitConstant(constantContext);
     }
 
-    private int getConstantFromContext(SchemeParser.ConstantContext constantContext) {
-        StringBuilder digitAsString = new StringBuilder();
+    @Override
+    public Void visitVariable_definition(SchemeParser.Variable_definitionContext variable_definitionContext) {
+        processVariableDefinitions(variable_definitionContext);
+        return super.visitVariable_definition(variable_definitionContext);
+    }
 
-        List<SchemeParser.DigitContext> digitContexts = constantContext.number().digit();
-        for (SchemeParser.DigitContext context : digitContexts) {
-            digitAsString.append(context.DIGIT().getSymbol().getText());
+    private void processVariableDefinitions(SchemeParser.Variable_definitionContext definitionContext) {
+        String identifier = definitionContext.IDENTIFIER().getText();
+        String value = evaluateExpression(definitionContext.expression());
+        variableDefinitions.put(identifier, value);
+    }
 
+    private String evaluateExpression(SchemeParser.ExpressionContext expression) {
+        if (expression.constant() != null) {
+            return getConstantFromContext(expression.constant());
         }
+        String identifier = expression.IDENTIFIER().getText();
+        if (variableDefinitions.containsKey(identifier)) {
+            return variableDefinitions.get(identifier);
+        }
+        throw new RuntimeException("Unknown identifier");
+    }
 
-        return Integer.valueOf(digitAsString.toString());
+    private String getConstantFromContext(SchemeParser.ConstantContext constantContext) {
+        return constantContext.NUMBER().getText();
     }
 
 }
