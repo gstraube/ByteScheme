@@ -14,7 +14,10 @@ expression: constant
           | IDENTIFIER
           ;
 
-constant: NUMBER;
+constant: NUMBER
+        | BOOLEAN
+        | CHARACTER
+        | STRING;
 
 IDENTIFIER: INITIAL SUBSEQUENT*
           | '+'
@@ -29,6 +32,14 @@ SUBSEQUENT: INITIAL
           | DIGIT
           | OTHER_SUBSEQUENT_CHAR
           ;
+
+BOOLEAN: '#t' | '#f';
+
+CHARACTER: '#\\' .
+         | '#\\newline'
+         | '#\\space';
+
+STRING: '\"' ~[\\|"]* '\"';
 
 NUMBER: DIGIT+;
 

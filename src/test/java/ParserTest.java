@@ -23,7 +23,8 @@ public class ParserTest {
 
     @Test
     public void constants_are_parsed_correctly() {
-        String[] expectedConstants = {"42", "#t"};
+        String[] expectedConstants = {"42", "#t", "#\\λ", "#\\newline", "#\\space",
+                                      "\"a string\""};
 
         for (String constant : expectedConstants) {
             visitParseTreeForInput(constant);

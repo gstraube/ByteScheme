@@ -41,6 +41,12 @@ public class ParserTestVisitor extends SchemeBaseVisitor<Void> {
         if (constantContext.NUMBER() != null) {
             return constantContext.NUMBER().getText();
         }
+        if (constantContext.CHARACTER() != null) {
+            return constantContext.CHARACTER().getText();
+        }
+        if (constantContext.STRING() != null) {
+            return constantContext.STRING().getText();
+        }
         return constantContext.BOOLEAN().getText();
     }
 
