@@ -22,11 +22,14 @@ public class ParserTest {
     }
 
     @Test
-    public void constant_is_parsed_correctly() {
-        visitParseTreeForInput("42");
+    public void constants_are_parsed_correctly() {
+        String[] expectedConstants = {"42", "#t"};
 
-        Assert.assertThat(parserTestVisitor.constants.size(), is(1));
-        Assert.assertThat(parserTestVisitor.constants.get(0), is("42"));
+        for (String constant : expectedConstants) {
+            visitParseTreeForInput(constant);
+            Assert.assertThat(parserTestVisitor.constants.size(), is(1));
+            Assert.assertThat(parserTestVisitor.constants.get(0), is(constant));
+        }
     }
 
     @Test

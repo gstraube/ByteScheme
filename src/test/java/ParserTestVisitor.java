@@ -38,7 +38,10 @@ public class ParserTestVisitor extends SchemeBaseVisitor<Void> {
     }
 
     private String getConstantFromContext(SchemeParser.ConstantContext constantContext) {
-        return constantContext.NUMBER().getText();
+        if (constantContext.NUMBER() != null) {
+            return constantContext.NUMBER().getText();
+        }
+        return constantContext.BOOLEAN().getText();
     }
 
 }
