@@ -39,7 +39,7 @@ CHARACTER: '#\\' .
          | '#\\newline'
          | '#\\space';
 
-STRING: '\"' ~[\\|"]* '\"';
+STRING: '"' ~[\\|"]* '"';
 
 NUMBER: '-'? DIGIT+;
 
