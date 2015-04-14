@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import parser.ErrorListener;
 
 import static org.hamcrest.Matchers.is;
 
@@ -32,6 +33,20 @@ public class ParserTest {
             Assert.assertThat(parserTestVisitor.constants.size(), is(1));
             Assert.assertThat(parserTestVisitor.constants.get(0), is(constant));
         }
+    }
+
+    @Test
+    public void quotation_marks_are_not_allowed_in_string_constants() {
+        expectedException.expect(ParseCancellationException.class);
+
+        visitParseTreeForInput("\"\"\"");
+    }
+
+    @Test
+    public void backslashes_are_not_allowed_in_string_constants() {
+        expectedException.expect(ParseCancellationException.class);
+
+        visitParseTreeForInput("\"\\\"");
     }
 
     @Test
@@ -62,9 +77,13 @@ public class ParserTest {
     private void visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(ErrorListener.INSTANCE);
 
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SchemeParser parser = new SchemeParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(ErrorListener.INSTANCE);
 
         ParseTree parseTree = parser.program();
         parserTestVisitor = new ParserTestVisitor();
