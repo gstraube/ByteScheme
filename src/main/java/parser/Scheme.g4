@@ -41,7 +41,7 @@ CHARACTER: '#\\' .
 
 STRING: '\"' ~[\\|"]* '\"';
 
-NUMBER: DIGIT+;
+NUMBER: '-'? DIGIT+;
 
 LETTER: [a-z];
 
