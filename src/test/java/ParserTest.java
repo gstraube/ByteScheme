@@ -1,5 +1,6 @@
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,7 +53,7 @@ public class ParserTest {
 
     @Test
     public void trying_to_reference_an_undefined_variable_causes_an_exception() {
-        expectedException.expect(RuntimeException.class);
+        expectedException.expect(ParseCancellationException.class);
         expectedException.expectMessage("Undefined variable");
 
         visitParseTreeForInput("(define a_variable undefined_variable)");

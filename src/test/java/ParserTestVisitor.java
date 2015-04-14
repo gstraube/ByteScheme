@@ -1,3 +1,5 @@
+import org.antlr.v4.runtime.misc.ParseCancellationException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +36,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<Void> {
         if (variableDefinitions.containsKey(identifier)) {
             return variableDefinitions.get(identifier);
         }
-        throw new RuntimeException("Undefined variable");
+        throw new ParseCancellationException("Undefined variable");
     }
 
     private String getConstantFromContext(SchemeParser.ConstantContext constantContext) {
