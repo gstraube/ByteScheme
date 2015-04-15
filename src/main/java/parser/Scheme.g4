@@ -1,6 +1,6 @@
 grammar Scheme;
 
-program: form*;
+program: form* EOF;
 
 form: definition
     | expression
@@ -25,9 +25,11 @@ IDENTIFIER: INITIAL SUBSEQUENT*
           | '...'
           ;
 
+fragment
 INITIAL: LETTER
        | SPECIAL_CHARACTER;
 
+fragment
 SUBSEQUENT: INITIAL
           | DIGIT
           | OTHER_SUBSEQUENT_CHAR
@@ -43,12 +45,16 @@ STRING: '"' ~[\\|"]* '"';
 
 NUMBER: '-'? DIGIT+;
 
+fragment
 LETTER: [a-z];
 
+fragment
 DIGIT: [0-9];
 
+fragment
 SPECIAL_CHARACTER: '!' | '$' | '%' | '&' | '*' | '/' | ':' | '<' | '=' | '>' | '?' | '~' | '_' | '^';
 
+fragment
 OTHER_SUBSEQUENT_CHAR: '.' | '+' | '-';
 
 WHITESPACE: [ \n\t\r]+ -> skip;

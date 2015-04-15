@@ -31,6 +31,6 @@ public class ErrorListener implements ANTLRErrorListener {
 
     @Override
     public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-        throw new ParseCancellationException();
+        throw new ParseCancellationException(msg);
     }
 }
