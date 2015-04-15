@@ -1,31 +1,39 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class ParserTestVisitor extends SchemeBaseVisitor<Void> {
+public class ParserTestVisitor extends SchemeBaseVisitor<String> {
 
-    List<String> constants = new ArrayList<>();
     public Map<String, String> variableDefinitions = new HashMap<>();
 
+    private static final String NO_VALUE = "";
+
     @Override
-    public Void visitConstant(SchemeParser.ConstantContext constantContext) {
-        constants.add(getConstantFromContext(constantContext));
-        return super.visitConstant(constantContext);
+    public String visitExpression(SchemeParser.ExpressionContext expressionContext) {
+        return evaluateExpression(expressionContext);
     }
 
     @Override
-    public Void visitVariable_definition(SchemeParser.Variable_definitionContext variable_definitionContext) {
-        processVariableDefinitions(variable_definitionContext);
-        return super.visitVariable_definition(variable_definitionContext);
+    public String visitVariable_definition(SchemeParser.Variable_definitionContext variable_definitionContext) {
+        return processVariableDefinitions(variable_definitionContext);
     }
 
-    private void processVariableDefinitions(SchemeParser.Variable_definitionContext definitionContext) {
+    @Override
+    protected String defaultResult() {
+        return NO_VALUE;
+    }
+
+    @Override
+    protected String aggregateResult(String aggregate, String nextResult) {
+        return aggregate + nextResult;
+    }
+
+    private String processVariableDefinitions(SchemeParser.Variable_definitionContext definitionContext) {
         String identifier = definitionContext.IDENTIFIER().getText();
         String value = evaluateExpression(definitionContext.expression());
         variableDefinitions.put(identifier, value);
+        return NO_VALUE;
     }
 
     private String evaluateExpression(SchemeParser.ExpressionContext expression) {

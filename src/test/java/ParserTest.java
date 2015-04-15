@@ -30,9 +30,7 @@ public class ParserTest {
     @Test
     public void constants_are_parsed_correctly() {
         for (String constant : CONSTANTS) {
-            visitParseTreeForInput(constant);
-            Assert.assertThat(parserTestVisitor.constants.size(), is(1));
-            Assert.assertThat(parserTestVisitor.constants.get(0), is(constant));
+            Assert.assertThat(visitParseTreeForInput(constant), is(constant));
         }
     }
 
@@ -85,7 +83,7 @@ public class ParserTest {
         Assert.assertThat(parserTestVisitor.variableDefinitions.get("c"), is("#t"));
     }
 
-    private void visitParseTreeForInput(String input) {
+    private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
         lexer.removeErrorListeners();
@@ -98,7 +96,7 @@ public class ParserTest {
 
         ParseTree parseTree = parser.program();
         parserTestVisitor = new ParserTestVisitor();
-        parserTestVisitor.visit(parseTree);
+        return parserTestVisitor.visit(parseTree);
     }
 
 }
