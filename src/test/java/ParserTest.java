@@ -52,10 +52,10 @@ public class ParserTest {
 
     @Test
     public void it_is_possible_to_define_a_variable() {
-        visitParseTreeForInput("(define a_variable 51)");
-
-        Assert.assertThat(parserTestVisitor.variableDefinitions.size(), is(1));
-        Assert.assertThat(parserTestVisitor.variableDefinitions.get("a_variable"), is("51"));
+        for (String constant : CONSTANTS) {
+            visitParseTreeForInput(String.format("(define a_variable %s)", constant));
+            Assert.assertThat(parserTestVisitor.variableDefinitions.get("a_variable"), is(constant));
+        }
     }
 
     @Test
