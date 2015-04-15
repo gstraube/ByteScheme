@@ -6,7 +6,8 @@ form: definition
     | expression
     ;
 
-definition: variable_definition;
+definition: variable_definition
+          | '(' 'begin' definition* ')';
 
 variable_definition: '(' 'define' IDENTIFIER expression ')';
 

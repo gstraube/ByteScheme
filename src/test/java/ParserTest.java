@@ -74,6 +74,16 @@ public class ParserTest {
         visitParseTreeForInput("(define a_variable undefined_variable)");
     }
 
+    @Test
+    public void multiple_definitions_can_be_grouped_using_the_begin_keyword() {
+        visitParseTreeForInput("(begin (begin (define a \"foo\") (define b 21)) (define c #t))");
+
+        Assert.assertThat(parserTestVisitor.variableDefinitions.size(), is(3));
+        Assert.assertThat(parserTestVisitor.variableDefinitions.get("a"), is("\"foo\""));
+        Assert.assertThat(parserTestVisitor.variableDefinitions.get("b"), is("21"));
+        Assert.assertThat(parserTestVisitor.variableDefinitions.get("c"), is("#t"));
+    }
+
     private void visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
