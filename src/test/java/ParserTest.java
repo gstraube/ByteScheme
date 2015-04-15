@@ -17,6 +17,10 @@ public class ParserTest {
     public ExpectedException expectedException = ExpectedException.none();
 
     ParserTestVisitor parserTestVisitor;
+    public static final String[] CONSTANTS = new String[]{
+            "1", "42", "-1237", "#t",
+            "#\\λ", "#\\newline", "#\\space", "\"a string\""
+    };
 
     @Before
     public void initializeVisitor() {
@@ -25,10 +29,7 @@ public class ParserTest {
 
     @Test
     public void constants_are_parsed_correctly() {
-        String[] expectedConstants = {"1", "42", "-1237", "#t", "#\\λ", "#\\newline", "#\\space",
-                                      "\"a string\""};
-
-        for (String constant : expectedConstants) {
+        for (String constant : CONSTANTS) {
             visitParseTreeForInput(constant);
             Assert.assertThat(parserTestVisitor.constants.size(), is(1));
             Assert.assertThat(parserTestVisitor.constants.get(0), is(constant));
