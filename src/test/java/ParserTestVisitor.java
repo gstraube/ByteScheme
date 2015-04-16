@@ -11,13 +11,13 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
     public Map<String, String> variableDefinitions = new HashMap<>();
 
     @Override
-    public String visitExpression(SchemeParser.ExpressionContext expressionContext) {
-        return evaluateExpression(expressionContext);
+    public String visitExpression(SchemeParser.ExpressionContext expression) {
+        return evaluateExpression(expression);
     }
 
     @Override
-    public String visitVariable_definition(SchemeParser.Variable_definitionContext variable_definitionContext) {
-        return processVariableDefinitions(variable_definitionContext);
+    public String visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
+        return processVariableDefinitions(variableDefinition);
     }
 
     @Override
@@ -30,16 +30,16 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
         return aggregate + nextResult;
     }
 
-    private String processVariableDefinitions(SchemeParser.Variable_definitionContext definitionContext) {
-        String identifier = definitionContext.IDENTIFIER().getText();
-        String value = evaluateExpression(definitionContext.expression());
+    private String processVariableDefinitions(SchemeParser.Variable_definitionContext variableDefinition) {
+        String identifier = variableDefinition.IDENTIFIER().getText();
+        String value = evaluateExpression(variableDefinition.expression());
         variableDefinitions.put(identifier, value);
         return NO_VALUE;
     }
 
     private String evaluateExpression(SchemeParser.ExpressionContext expression) {
         if (expression.constant() != null) {
-            return getConstantFromContext(expression.constant());
+            return extractConstant(expression.constant());
         }
         if (expression.quotation() != null) {
             return applyQuotation(expression.quotation());
@@ -55,24 +55,24 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
         SchemeParser.DatumContext datum = quotation.datum();
 
         if (datum.constant() != null) {
-            return getConstantFromContext(datum.constant());
+            return extractConstant(datum.constant());
         }
 
         String identifier = datum.IDENTIFIER().getText();
         return QUOTATION_SYMBOL + identifier;
     }
 
-    private String getConstantFromContext(SchemeParser.ConstantContext constantContext) {
-        if (constantContext.NUMBER() != null) {
-            return constantContext.NUMBER().getText();
+    private String extractConstant(SchemeParser.ConstantContext constant) {
+        if (constant.NUMBER() != null) {
+            return constant.NUMBER().getText();
         }
-        if (constantContext.CHARACTER() != null) {
-            return constantContext.CHARACTER().getText();
+        if (constant.CHARACTER() != null) {
+            return constant.CHARACTER().getText();
         }
-        if (constantContext.STRING() != null) {
-            return constantContext.STRING().getText();
+        if (constant.STRING() != null) {
+            return constant.STRING().getText();
         }
-        return constantContext.BOOLEAN().getText();
+        return constant.BOOLEAN().getText();
     }
 
 }
