@@ -5,9 +5,10 @@ import java.util.Map;
 
 public class ParserTestVisitor extends SchemeBaseVisitor<String> {
 
-    public Map<String, String> variableDefinitions = new HashMap<>();
-
+    private static final String QUOTATION_SYMBOL = "'";
     private static final String NO_VALUE = "";
+
+    public Map<String, String> variableDefinitions = new HashMap<>();
 
     @Override
     public String visitExpression(SchemeParser.ExpressionContext expressionContext) {
@@ -51,7 +52,14 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
     }
 
     private String applyQuotation(SchemeParser.QuotationContext quotation) {
-        return getConstantFromContext(quotation.constant());
+        SchemeParser.DatumContext datum = quotation.datum();
+
+        if (datum.constant() != null) {
+            return getConstantFromContext(datum.constant());
+        }
+
+        String identifier = datum.IDENTIFIER().getText();
+        return QUOTATION_SYMBOL + identifier;
     }
 
     private String getConstantFromContext(SchemeParser.ConstantContext constantContext) {

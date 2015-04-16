@@ -16,7 +16,10 @@ expression: constant
           | IDENTIFIER
           ;
 
-quotation: '(' ('quote' | '\'') constant ')';
+quotation: '(' ('quote' | '\'') datum ')';
+
+datum: constant
+     | IDENTIFIER;
 
 constant: NUMBER
         | BOOLEAN

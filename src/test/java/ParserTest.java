@@ -93,6 +93,11 @@ public class ParserTest {
         }
     }
 
+    @Test
+    public void quoting_an_identifier_produces_a_symbol() {
+        Assert.assertThat(visitParseTreeForInput("(quote an_identifier)"), is("'an_identifier"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
