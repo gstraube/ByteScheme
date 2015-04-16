@@ -40,11 +40,18 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
         if (expression.constant() != null) {
             return getConstantFromContext(expression.constant());
         }
+        if (expression.quotation() != null) {
+            return applyQuotation(expression.quotation());
+        }
         String identifier = expression.IDENTIFIER().getText();
         if (variableDefinitions.containsKey(identifier)) {
             return variableDefinitions.get(identifier);
         }
         throw new ParseCancellationException("Undefined variable");
+    }
+
+    private String applyQuotation(SchemeParser.QuotationContext quotation) {
+        return getConstantFromContext(quotation.constant());
     }
 
     private String getConstantFromContext(SchemeParser.ConstantContext constantContext) {

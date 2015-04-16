@@ -83,6 +83,16 @@ public class ParserTest {
         Assert.assertThat(parserTestVisitor.variableDefinitions.get("c"), is("#t"));
     }
 
+    @Test
+    public void quoting_a_constant_once_returns_the_constant() {
+        for (String constant : CONSTANTS) {
+            String result = visitParseTreeForInput(String.format("(quote %s)", constant));
+            Assert.assertThat(result, is(constant));
+            result = visitParseTreeForInput(String.format("('%s)", constant));
+            Assert.assertThat(result, is(constant));
+        }
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

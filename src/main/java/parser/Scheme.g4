@@ -12,8 +12,11 @@ definition: variable_definition
 variable_definition: '(' 'define' IDENTIFIER expression ')';
 
 expression: constant
+          | quotation
           | IDENTIFIER
           ;
+
+quotation: '(' ('quote' | '\'') constant ')';
 
 constant: NUMBER
         | BOOLEAN
