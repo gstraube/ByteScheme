@@ -19,7 +19,10 @@ expression: constant
 quotation: '(' ('quote' | '\'') datum ')';
 
 datum: constant
+     | list
      | IDENTIFIER;
+
+list: '(' datum* ')';
 
 constant: NUMBER
         | BOOLEAN

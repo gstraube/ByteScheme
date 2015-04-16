@@ -1,11 +1,12 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ParserTestVisitor extends SchemeBaseVisitor<String> {
 
-    private static final String QUOTATION_SYMBOL = "'";
+    public static final String QUOTATION_SYMBOL = "'";
     private static final String NO_VALUE = "";
 
     public Map<String, String> variableDefinitions = new HashMap<>();
@@ -58,8 +59,35 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
             return extractConstant(datum.constant());
         }
 
+        if (datum.list() != null) {
+            return QUOTATION_SYMBOL + collectListElements(datum.list());
+        }
+
         String identifier = datum.IDENTIFIER().getText();
         return QUOTATION_SYMBOL + identifier;
+    }
+
+    private String collectListElements(SchemeParser.ListContext list) {
+        List<SchemeParser.DatumContext> data = list.datum();
+        StringBuilder builder = new StringBuilder();
+        builder.append("(");
+        for (int i = 0; i < data.size(); i++) {
+            SchemeParser.DatumContext datum = data.get(i);
+            if (datum.list() != null) {
+                builder.append(collectListElements(datum.list()));
+            }
+            if (datum.constant() != null) {
+                builder.append(extractConstant(datum.constant()));
+            }
+            if (datum.IDENTIFIER() != null) {
+                builder.append(datum.IDENTIFIER().getText());
+            }
+            if (i < data.size() - 1) {
+                builder.append(" ");
+            }
+        }
+        builder.append(")");
+        return builder.toString();
     }
 
     private String extractConstant(SchemeParser.ConstantContext constant) {

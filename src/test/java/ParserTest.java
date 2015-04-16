@@ -98,6 +98,14 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput("(quote an_identifier)"), is("'an_identifier"));
     }
 
+    @Test
+    public void quoting_a_sequence_of_data_in_parentheses_produces_a_list() {
+        String listElements = "(15 (\"abc\" #t) 7 (#\\u #f) 2 \"a_string\")";
+        String input = "(quote " + listElements + ")";
+        String expectedOutput = ParserTestVisitor.QUOTATION_SYMBOL + listElements;
+        Assert.assertThat(visitParseTreeForInput(input), is(expectedOutput));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
