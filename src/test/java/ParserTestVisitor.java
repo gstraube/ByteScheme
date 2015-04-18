@@ -8,6 +8,10 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
 
     public static final String QUOTATION_SYMBOL = "'";
     private static final String NO_VALUE = "";
+    private static final String LIST_START = "(";
+    private static final String LIST_END = ")";
+    private static final String VECTOR_START = "#(";
+    private static final String VECTOR_END = ")";
 
     public Map<String, String> variableDefinitions = new HashMap<>();
 
@@ -72,35 +76,24 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
     }
 
     private String collectVectorElements(SchemeParser.VectorContext vector) {
-        List<SchemeParser.DatumContext> data = vector.datum();
-        StringBuilder builder = new StringBuilder();
-        builder.append("#(");
-        for (int i = 0; i < data.size(); i++) {
-            SchemeParser.DatumContext datum = data.get(i);
-            if (datum.list() != null) {
-                builder.append(collectListElements(datum.list()));
-            }
-            if (datum.vector() != null) {
-                builder.append(collectVectorElements(datum.vector()));
-            }
-            if (datum.constant() != null) {
-                builder.append(extractConstant(datum.constant()));
-            }
-            if (datum.IDENTIFIER() != null) {
-                builder.append(datum.IDENTIFIER().getText());
-            }
-            if (i < data.size() - 1) {
-                builder.append(" ");
-            }
-        }
-        builder.append(")");
-        return builder.toString();
+        return collectSequenceElements(vector.datum(), VECTOR_START, VECTOR_END);
     }
 
     private String collectListElements(SchemeParser.ListContext list) {
-        List<SchemeParser.DatumContext> data = list.datum();
+        return collectSequenceElements(list.datum(), LIST_START, LIST_END);
+    }
+
+    private String collectSequenceElements(List<SchemeParser.DatumContext> data,
+                                           String seqStartSymbol,
+                                           String seqEndSymbol) {
+        String sequence = seqStartSymbol;
+        sequence += collectData(data);
+        sequence += seqEndSymbol;
+        return sequence;
+    }
+
+    private String collectData(List<SchemeParser.DatumContext> data) {
         StringBuilder builder = new StringBuilder();
-        builder.append("(");
         for (int i = 0; i < data.size(); i++) {
             SchemeParser.DatumContext datum = data.get(i);
             if (datum.list() != null) {
@@ -119,7 +112,6 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
                 builder.append(" ");
             }
         }
-        builder.append(")");
         return builder.toString();
     }
 
