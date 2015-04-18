@@ -63,8 +63,38 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
             return QUOTATION_SYMBOL + collectListElements(datum.list());
         }
 
+        if (datum.vector() != null) {
+            return QUOTATION_SYMBOL + collectVectorElements(datum.vector());
+        }
+
         String identifier = datum.IDENTIFIER().getText();
         return QUOTATION_SYMBOL + identifier;
+    }
+
+    private String collectVectorElements(SchemeParser.VectorContext vector) {
+        List<SchemeParser.DatumContext> data = vector.datum();
+        StringBuilder builder = new StringBuilder();
+        builder.append("#(");
+        for (int i = 0; i < data.size(); i++) {
+            SchemeParser.DatumContext datum = data.get(i);
+            if (datum.list() != null) {
+                builder.append(collectListElements(datum.list()));
+            }
+            if (datum.vector() != null) {
+                builder.append(collectVectorElements(datum.vector()));
+            }
+            if (datum.constant() != null) {
+                builder.append(extractConstant(datum.constant()));
+            }
+            if (datum.IDENTIFIER() != null) {
+                builder.append(datum.IDENTIFIER().getText());
+            }
+            if (i < data.size() - 1) {
+                builder.append(" ");
+            }
+        }
+        builder.append(")");
+        return builder.toString();
     }
 
     private String collectListElements(SchemeParser.ListContext list) {
@@ -75,6 +105,9 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
             SchemeParser.DatumContext datum = data.get(i);
             if (datum.list() != null) {
                 builder.append(collectListElements(datum.list()));
+            }
+            if (datum.vector() != null) {
+                builder.append(collectVectorElements(datum.vector()));
             }
             if (datum.constant() != null) {
                 builder.append(extractConstant(datum.constant()));
