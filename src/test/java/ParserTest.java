@@ -88,30 +88,28 @@ public class ParserTest {
         for (String constant : CONSTANTS) {
             String result = visitParseTreeForInput(String.format("(quote %s)", constant));
             Assert.assertThat(result, is(constant));
-            result = visitParseTreeForInput(String.format("('%s)", constant));
+            result = visitParseTreeForInput(String.format("'%s", constant));
             Assert.assertThat(result, is(constant));
         }
     }
 
     @Test
     public void quoting_an_identifier_produces_a_symbol() {
-        Assert.assertThat(visitParseTreeForInput("(quote an_identifier)"), is("'an_identifier"));
+        Assert.assertThat(visitParseTreeForInput("(quote an_identifier)"), is("an_identifier"));
     }
 
     @Test
     public void quoting_a_sequence_of_data_in_parentheses_produces_a_list() {
         String listElements = "(15 (\"abc\" #t) 7 #(1 2 3) (#\\u #f) 2 \"a_string\")";
         String input = "(quote " + listElements + ")";
-        String expectedOutput = ParserTestVisitor.QUOTATION_SYMBOL + listElements;
-        Assert.assertThat(visitParseTreeForInput(input), is(expectedOutput));
+        Assert.assertThat(visitParseTreeForInput(input), is(listElements));
     }
 
     @Test
     public void quoting_a_sequence_of_data_in_parentheses_and_prefixed_with_a_number_sign_produces_a_vector() {
         String listElements = "#(\"abc\" 1 #\\u 20 30 (#\\v #\\z #(1 2 3)))";
         String input = "(quote " + listElements + ")";
-        String expectedOutput = ParserTestVisitor.QUOTATION_SYMBOL + listElements;
-        Assert.assertThat(visitParseTreeForInput(input), is(expectedOutput));
+        Assert.assertThat(visitParseTreeForInput(input), is(listElements));
     }
 
     private String visitParseTreeForInput(String input) {

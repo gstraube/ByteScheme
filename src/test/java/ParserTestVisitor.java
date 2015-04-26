@@ -6,7 +6,6 @@ import java.util.Map;
 
 public class ParserTestVisitor extends SchemeBaseVisitor<String> {
 
-    public static final String QUOTATION_SYMBOL = "'";
     private static final String NO_VALUE = "";
     private static final String LIST_START = "(";
     private static final String LIST_END = ")";
@@ -64,15 +63,14 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
         }
 
         if (datum.list() != null) {
-            return QUOTATION_SYMBOL + collectListElements(datum.list());
+            return collectListElements(datum.list());
         }
 
         if (datum.vector() != null) {
-            return QUOTATION_SYMBOL + collectVectorElements(datum.vector());
+            return collectVectorElements(datum.vector());
         }
 
-        String identifier = datum.IDENTIFIER().getText();
-        return QUOTATION_SYMBOL + identifier;
+        return datum.IDENTIFIER().getText();
     }
 
     private String collectVectorElements(SchemeParser.VectorContext vector) {
