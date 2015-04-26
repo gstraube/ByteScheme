@@ -106,6 +106,12 @@ public class ParserTest {
     }
 
     @Test
+    public void multiple_quotation_is_possible() {
+        String input = "(quote (quote (quote (1 2 3))))";
+        Assert.assertThat(visitParseTreeForInput(input), is("''(1 2 3)"));
+    }
+
+    @Test
     public void quoting_a_sequence_of_data_in_parentheses_and_prefixed_with_a_number_sign_produces_a_vector() {
         String listElements = "#(\"abc\" 1 #\\u 20 30 (#\\v #\\z #(1 2 3)))";
         String input = "(quote " + listElements + ")";

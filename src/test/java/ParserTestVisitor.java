@@ -11,6 +11,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
     private static final String LIST_END = ")";
     private static final String VECTOR_START = "#(";
     private static final String VECTOR_END = ")";
+    private static final String QUOTATION_SYMBOL = "'";
 
     public Map<String, String> variableDefinitions = new HashMap<>();
 
@@ -56,21 +57,26 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
     }
 
     private String applyQuotation(SchemeParser.QuotationContext quotation) {
-        SchemeParser.DatumContext datum = quotation.datum();
 
-        if (datum.constant() != null) {
-            return extractConstant(datum.constant());
+        if (quotation.datum() != null) {
+            SchemeParser.DatumContext datum = quotation.datum();
+
+            if (datum.constant() != null) {
+                return extractConstant(datum.constant());
+            }
+
+            if (datum.list() != null) {
+                return collectListElements(datum.list());
+            }
+
+            if (datum.vector() != null) {
+                return collectVectorElements(datum.vector());
+            }
+
+            return datum.IDENTIFIER().getText();
         }
 
-        if (datum.list() != null) {
-            return collectListElements(datum.list());
-        }
-
-        if (datum.vector() != null) {
-            return collectVectorElements(datum.vector());
-        }
-
-        return datum.IDENTIFIER().getText();
+        return QUOTATION_SYMBOL + applyQuotation(quotation.quotation());
     }
 
     private String collectVectorElements(SchemeParser.VectorContext vector) {

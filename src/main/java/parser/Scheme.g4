@@ -16,8 +16,8 @@ expression: constant
           | IDENTIFIER
           ;
 
-quotation: '(' 'quote' datum ')'
-         | '\'' datum;
+quotation: '(' 'quote' (quotation | datum) ')'
+         | '\'' (quotation | datum);
 
 datum: constant
      | list
