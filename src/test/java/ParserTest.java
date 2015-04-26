@@ -112,6 +112,12 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput(input), is(listElements));
     }
 
+    @Test
+    public void all_character_symbols_are_supported() {
+        String characterSymbolsInList = "(+ - ... !.. $.+ %.- &.! *.: /:. :+. <-. =. >. ?. ~. _. ^.)";
+        Assert.assertThat(visitParseTreeForInput("'" + characterSymbolsInList), is(characterSymbolsInList));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
