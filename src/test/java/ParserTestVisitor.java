@@ -1,10 +1,8 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class ParserTestVisitor extends SchemeBaseVisitor<String> {
+public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     private static final String NO_VALUE = "";
     private static final String LIST_START = "(";
@@ -16,23 +14,25 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
     public Map<String, String> variableDefinitions = new HashMap<>();
 
     @Override
-    public String visitExpression(SchemeParser.ExpressionContext expression) {
-        return evaluateExpression(expression);
+    public List<String> visitExpression(SchemeParser.ExpressionContext expression) {
+        return Arrays.asList(evaluateExpression(expression));
     }
 
     @Override
-    public String visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
-        return processVariableDefinitions(variableDefinition);
+    public List<String> visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
+        processVariableDefinitions(variableDefinition);
+        return Collections.emptyList();
     }
 
     @Override
-    protected String defaultResult() {
-        return NO_VALUE;
+    protected List<String> defaultResult() {
+        return new ArrayList<>();
     }
 
     @Override
-    protected String aggregateResult(String aggregate, String nextResult) {
-        return aggregate + nextResult;
+    protected List<String> aggregateResult(List<String> aggregate, List<String> nextResult) {
+        aggregate.addAll(nextResult);
+        return aggregate;
     }
 
     private String processVariableDefinitions(SchemeParser.Variable_definitionContext variableDefinition) {
@@ -57,7 +57,6 @@ public class ParserTestVisitor extends SchemeBaseVisitor<String> {
     }
 
     private String applyQuotation(SchemeParser.QuotationContext quotation) {
-
         if (quotation.datum() != null) {
             SchemeParser.DatumContext datum = quotation.datum();
 

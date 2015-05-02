@@ -9,6 +9,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import parser.ErrorListener;
 
+import java.util.List;
+
 import static org.hamcrest.Matchers.is;
 
 public class ParserTest {
@@ -137,7 +139,9 @@ public class ParserTest {
 
         ParseTree parseTree = parser.program();
         parserTestVisitor = new ParserTestVisitor();
-        return parserTestVisitor.visit(parseTree);
+        List<String> output = parserTestVisitor.visit(parseTree);
+
+        return  String.join(" ", output);
     }
 
 }
