@@ -1,6 +1,7 @@
-@FunctionalInterface
+import java.util.Collection;
+
 public interface Procedure {
 
-    public abstract void apply();
+    public abstract String apply(Collection<String> arguments);
 
 }

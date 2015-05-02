@@ -140,6 +140,12 @@ public class ParserTest {
         visitParseTreeForInput("(func 1 2 3)");
     }
 
+    @Test
+    public void predefined_procedures_can_be_called() {
+        String input = "(+ 2 3 (+ 3 7))";
+        Assert.assertThat(visitParseTreeForInput(input), is("15"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

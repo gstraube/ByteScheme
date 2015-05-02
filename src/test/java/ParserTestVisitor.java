@@ -1,6 +1,7 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
@@ -13,6 +14,13 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     public Map<String, String> variableDefinitions = new HashMap<>();
     private Map<String, Procedure> definedProcedures = new HashMap<>();
+
+    public ParserTestVisitor() {
+        definedProcedures.put("+", arguments -> arguments.stream()
+                    .map(Integer::valueOf)
+                    .reduce(0, (a, b) -> a + b)
+                    .toString());
+    }
 
     @Override
     public List<String> visitExpression(SchemeParser.ExpressionContext expression) {
@@ -65,9 +73,14 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
         if (!definedProcedures.containsKey(procedureName)) {
             throw new ParseCancellationException("Undefined procedure");
+        } else {
+            Procedure procedure = definedProcedures.get(procedureName);
+            Collection<String> arguments = application.expression()
+                    .stream()
+                    .map(this::evaluateExpression)
+                    .collect(Collectors.toList());
+            return procedure.apply(arguments);
         }
-
-        return NO_VALUE;
     }
 
     private String applyQuotation(SchemeParser.QuotationContext quotation) {
