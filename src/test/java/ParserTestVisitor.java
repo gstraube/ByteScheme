@@ -12,6 +12,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
     private static final String QUOTATION_SYMBOL = "'";
 
     public Map<String, String> variableDefinitions = new HashMap<>();
+    private Map<String, Procedure> definedProcedures = new HashMap<>();
 
     @Override
     public List<String> visitExpression(SchemeParser.ExpressionContext expression) {
@@ -49,11 +50,24 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
         if (expression.quotation() != null) {
             return applyQuotation(expression.quotation());
         }
+        if (expression.application() != null) {
+            return evaluateApplication(expression.application());
+        }
         String identifier = expression.IDENTIFIER().getText();
         if (variableDefinitions.containsKey(identifier)) {
             return variableDefinitions.get(identifier);
         }
         throw new ParseCancellationException("Undefined variable");
+    }
+
+    private String evaluateApplication(SchemeParser.ApplicationContext application) {
+        String procedureName = application.IDENTIFIER().getText();
+
+        if (!definedProcedures.containsKey(procedureName)) {
+            throw new ParseCancellationException("Undefined procedure");
+        }
+
+        return NO_VALUE;
     }
 
     private String applyQuotation(SchemeParser.QuotationContext quotation) {

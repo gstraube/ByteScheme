@@ -132,6 +132,14 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput(input), is("2 \"bar\" 3 #t #\\a"));
     }
 
+    @Test
+    public void an_application_with_an_undefined_procedure_leads_to_an_error() {
+        expectedException.expect(ParseCancellationException.class);
+        expectedException.expectMessage("Undefined procedure");
+
+        visitParseTreeForInput("(func 1 2 3)");
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

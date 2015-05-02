@@ -13,11 +13,14 @@ variable_definition: '(' 'define' IDENTIFIER expression ')';
 
 expression: constant
           | quotation
+          | application
           | IDENTIFIER
           ;
 
 quotation: '(' 'quote' (quotation | datum) ')'
          | '\'' (quotation | datum);
+
+application: '(' IDENTIFIER expression* ')';
 
 datum: constant
      | list
