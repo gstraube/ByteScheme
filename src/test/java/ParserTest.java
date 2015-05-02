@@ -126,6 +126,12 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput("'" + characterSymbolsInList), is(characterSymbolsInList));
     }
 
+    @Test
+    public void a_program_can_contain_multiple_expressions_on_the_top_level() {
+        String input = "2 (define foo 3) \"bar\" foo #t (define baz #\\a) baz";
+        Assert.assertThat(visitParseTreeForInput(input), is("2 \"bar\" 3 #t #\\a"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
