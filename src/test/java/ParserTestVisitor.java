@@ -27,6 +27,10 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
             Integer firstArgument = intArguments.stream().findFirst().get();
             List<Integer> tailArguments = intArguments.subList(1, intArguments.size());
 
+            if (tailArguments.isEmpty()) {
+                return String.valueOf(-firstArgument);
+            }
+
             return tailArguments.stream()
                     .reduce(firstArgument, (a, b) -> a - b)
                     .toString();
