@@ -146,6 +146,8 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput(input), is("25"));
         input = "(- 10 (- 5 200) 375 (- 20))";
         Assert.assertThat(visitParseTreeForInput(input), is("-150"));
+        input = "(* 2 (* 5) 10 (* 3 7))";
+        Assert.assertThat(visitParseTreeForInput(input), is("2100"));
     }
 
     private String visitParseTreeForInput(String input) {

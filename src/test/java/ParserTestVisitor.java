@@ -35,6 +35,10 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
                     .reduce(firstArgument, (a, b) -> a - b)
                     .toString();
         });
+        definedProcedures.put("*", arguments -> arguments.stream()
+                .map(Integer::valueOf)
+                .reduce(1, (a, b) -> a * b)
+                .toString());
     }
 
     @Override
