@@ -148,6 +148,8 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput(input), is("-150"));
         input = "(* 2 (* 5) 10 (* 3 7))";
         Assert.assertThat(visitParseTreeForInput(input), is("2100"));
+        input = "(quotient 10 (quotient 7 3))";
+        Assert.assertThat(visitParseTreeForInput(input), is("5"));
     }
 
     private String visitParseTreeForInput(String input) {

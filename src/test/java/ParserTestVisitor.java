@@ -39,6 +39,12 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
                 .map(Integer::valueOf)
                 .reduce(1, (a, b) -> a * b)
                 .toString());
+        definedProcedures.put("quotient", arguments -> {
+            int dividend = Integer.parseInt(arguments.get(0));
+            int divisor = Integer.parseInt(arguments.get(1));
+
+            return String.valueOf(dividend / divisor);
+        });
     }
 
     @Override
