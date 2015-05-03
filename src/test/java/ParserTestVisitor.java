@@ -16,11 +16,15 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
     private Map<String, Procedure> definedProcedures = new HashMap<>();
 
     public ParserTestVisitor() {
-        definedProcedures.put("+", arguments -> arguments.stream()
-                .map(Integer::valueOf)
-                .reduce(0, (a, b) -> a + b)
-                .toString());
+        definedProcedures.put("+", arguments -> {
+            checkMinimalArity(arguments.size(), 1);
+            return arguments.stream()
+                    .map(Integer::valueOf)
+                    .reduce(0, (a, b) -> a + b)
+                    .toString();
+        });
         definedProcedures.put("-", arguments -> {
+            checkMinimalArity(arguments.size(), 1);
             List<Integer> intArguments = arguments.stream()
                     .map(Integer::valueOf)
                     .collect(Collectors.toList());
@@ -35,16 +39,34 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
                     .reduce(firstArgument, (a, b) -> a - b)
                     .toString();
         });
-        definedProcedures.put("*", arguments -> arguments.stream()
-                .map(Integer::valueOf)
-                .reduce(1, (a, b) -> a * b)
-                .toString());
+        definedProcedures.put("*", arguments -> {
+            checkMinimalArity(arguments.size(), 1);
+            return arguments.stream()
+                    .map(Integer::valueOf)
+                    .reduce(1, (a, b) -> a * b)
+                    .toString();
+        });
         definedProcedures.put("quotient", arguments -> {
+            checkExactArity(arguments.size(), 2);
             int dividend = Integer.parseInt(arguments.get(0));
             int divisor = Integer.parseInt(arguments.get(1));
 
             return String.valueOf(dividend / divisor);
         });
+    }
+
+    private void checkExactArity(int argumentsCount, int arity) {
+        if (argumentsCount != arity) {
+            String message = "Arguments count %d does not match expected arity of %d";
+            throw new ParseCancellationException(String.format(message, argumentsCount, arity));
+        }
+    }
+
+    private void checkMinimalArity(int argumentsCount, int minimalArity) {
+        if (argumentsCount < minimalArity) {
+            String message = "Arguments count %d does not match expected minimal arity of %d";
+            throw new ParseCancellationException(String.format(message, argumentsCount, minimalArity));
+        }
     }
 
     @Override

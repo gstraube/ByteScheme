@@ -152,6 +152,22 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput(input), is("5"));
     }
 
+    @Test
+    public void passing_less_than_the_minimal_expected_number_of_arguments_to_a_procedure_causes_an_error() {
+        expectedException.expect(ParseCancellationException.class);
+        expectedException.expectMessage("Arguments count 0 does not match expected minimal arity of 1");
+
+        visitParseTreeForInput("(+)");
+    }
+
+    @Test
+    public void passing_the_wrong_number_of_arguments_to_a_procedure_causes_an_error() {
+        expectedException.expect(ParseCancellationException.class);
+        expectedException.expectMessage("Arguments count 3 does not match expected arity of 2");
+
+        visitParseTreeForInput("(quotient 1 2 3)");
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
