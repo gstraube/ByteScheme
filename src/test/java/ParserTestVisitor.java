@@ -80,14 +80,14 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
         if (variableDefinitions.containsKey(identifier)) {
             return variableDefinitions.get(identifier);
         }
-        throw new ParseCancellationException("Undefined variable");
+        throw new ParseCancellationException(String.format("Undefined variable %s", identifier));
     }
 
     private String evaluateApplication(SchemeParser.ApplicationContext application) {
         String procedureName = application.IDENTIFIER().getText();
 
         if (!definedProcedures.containsKey(procedureName)) {
-            throw new ParseCancellationException("Undefined procedure");
+            throw new ParseCancellationException(String.format("Undefined procedure %s", procedureName));
         } else {
             Procedure procedure = definedProcedures.get(procedureName);
             List<String> arguments = application.expression()
