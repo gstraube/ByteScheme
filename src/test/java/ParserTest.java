@@ -144,6 +144,8 @@ public class ParserTest {
     public void predefined_procedures_can_be_called() {
         String input = "(+ 2 3 (+ 3 7))";
         Assert.assertThat(visitParseTreeForInput(input), is("15"));
+        input = "(- 10 5 200 375)";
+        Assert.assertThat(visitParseTreeForInput(input), is("-570"));
     }
 
     private String visitParseTreeForInput(String input) {

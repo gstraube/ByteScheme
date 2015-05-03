@@ -17,9 +17,20 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     public ParserTestVisitor() {
         definedProcedures.put("+", arguments -> arguments.stream()
+                .map(Integer::valueOf)
+                .reduce(0, (a, b) -> a + b)
+                .toString());
+        definedProcedures.put("-", arguments -> {
+            List<Integer> intArguments = arguments.stream()
                     .map(Integer::valueOf)
-                    .reduce(0, (a, b) -> a + b)
-                    .toString());
+                    .collect(Collectors.toList());
+            Integer firstArgument = intArguments.stream().findFirst().get();
+            List<Integer> tailArguments = intArguments.subList(1, intArguments.size());
+
+            return tailArguments.stream()
+                    .reduce(firstArgument, (a, b) -> a - b)
+                    .toString();
+        });
     }
 
     @Override
@@ -75,7 +86,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
             throw new ParseCancellationException("Undefined procedure");
         } else {
             Procedure procedure = definedProcedures.get(procedureName);
-            Collection<String> arguments = application.expression()
+            List<String> arguments = application.expression()
                     .stream()
                     .map(this::evaluateExpression)
                     .collect(Collectors.toList());

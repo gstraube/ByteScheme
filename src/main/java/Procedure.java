@@ -1,7 +1,7 @@
-import java.util.Collection;
+import java.util.List;
 
 public interface Procedure {
 
-    public abstract String apply(Collection<String> arguments);
+    public abstract String apply(List<String> arguments);
 
 }
