@@ -1,7 +1,7 @@
+import lang.Constant;
+import lang.PredefinedProcedures;
+import lang.Procedure;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import procedure.Constant;
-import procedure.PredefinedProcedures;
-import procedure.Procedure;
 
 import java.util.*;
 import java.util.stream.Collectors;

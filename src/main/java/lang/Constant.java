@@ -1,4 +1,4 @@
-package procedure;
+package lang;
 
 public class Constant<T> {
 

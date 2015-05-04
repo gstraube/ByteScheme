@@ -1,4 +1,4 @@
-package procedure;
+package lang;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
