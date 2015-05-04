@@ -1,4 +1,5 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import procedure.Constant;
 import procedure.PredefinedProcedures;
 import procedure.Procedure;
 
@@ -52,7 +53,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     private String evaluateExpression(SchemeParser.ExpressionContext expression) {
         if (expression.constant() != null) {
-            return extractConstant(expression.constant());
+            return extractConstant(expression.constant()).getText();
         }
         if (expression.quotation() != null) {
             return applyQuotation(expression.quotation());
@@ -87,7 +88,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
             SchemeParser.DatumContext datum = quotation.datum();
 
             if (datum.constant() != null) {
-                return extractConstant(datum.constant());
+                return extractConstant(datum.constant()).toString();
             }
 
             if (datum.list() != null) {
@@ -144,17 +145,24 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
         return builder.toString();
     }
 
-    private String extractConstant(SchemeParser.ConstantContext constant) {
+    private Constant extractConstant(SchemeParser.ConstantContext constant) {
         if (constant.NUMBER() != null) {
-            return constant.NUMBER().getText();
+            String text = constant.NUMBER().getText();
+            int value = Integer.valueOf(text);
+            return new Constant<>(value, text);
         }
         if (constant.CHARACTER() != null) {
-            return constant.CHARACTER().getText();
+            String text = constant.CHARACTER().getText();
+            char value = text.charAt(2);
+            return new Constant<>(value, text);
         }
         if (constant.STRING() != null) {
-            return constant.STRING().getText();
+            String text = constant.STRING().getText();
+            return new Constant<>(text, text);
         }
-        return constant.BOOLEAN().getText();
+        String text = constant.BOOLEAN().getText();
+        boolean value = Boolean.valueOf(text);
+        return new Constant<>(value, text);
     }
 
 }
