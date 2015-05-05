@@ -54,7 +54,7 @@ public class ParserTest {
     public void it_is_possible_to_define_a_variable() {
         for (String constant : CONSTANTS) {
             visitParseTreeForInput(String.format("(define a_variable %s)", constant));
-            Assert.assertThat(parserTestVisitor.variableDefinitions.get("a_variable"), is(constant));
+            Assert.assertThat(parserTestVisitor.variableDefinitions.get("a_variable").getText(), is(constant));
         }
     }
 
@@ -63,8 +63,8 @@ public class ParserTest {
         visitParseTreeForInput("(define a_variable 12) (define a_second_variable a_variable)");
 
         Assert.assertThat(parserTestVisitor.variableDefinitions.size(), is(2));
-        Assert.assertThat(parserTestVisitor.variableDefinitions.get("a_variable"), is("12"));
-        Assert.assertThat(parserTestVisitor.variableDefinitions.get("a_second_variable"), is("12"));
+        Assert.assertThat(parserTestVisitor.variableDefinitions.get("a_variable").getText(), is("12"));
+        Assert.assertThat(parserTestVisitor.variableDefinitions.get("a_second_variable").getText(), is("12"));
     }
 
     @Test
@@ -80,9 +80,9 @@ public class ParserTest {
         visitParseTreeForInput("(begin (begin (define a \"foo\") (define b 21)) (define c #t))");
 
         Assert.assertThat(parserTestVisitor.variableDefinitions.size(), is(3));
-        Assert.assertThat(parserTestVisitor.variableDefinitions.get("a"), is("\"foo\""));
-        Assert.assertThat(parserTestVisitor.variableDefinitions.get("b"), is("21"));
-        Assert.assertThat(parserTestVisitor.variableDefinitions.get("c"), is("#t"));
+        Assert.assertThat(parserTestVisitor.variableDefinitions.get("a").getText(), is("\"foo\""));
+        Assert.assertThat(parserTestVisitor.variableDefinitions.get("b").getText(), is("21"));
+        Assert.assertThat(parserTestVisitor.variableDefinitions.get("c").getText(), is("#t"));
     }
 
     @Test

@@ -2,10 +2,10 @@ package lang;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public abstract class PredefinedProcedures {
 
@@ -21,49 +21,48 @@ public abstract class PredefinedProcedures {
     private static void defineQuotient() {
         MATH_PROCEDURES.put("quotient", arguments -> {
             checkExactArity(arguments.size(), 2);
-            int dividend = Integer.parseInt(arguments.get(0));
-            int divisor = Integer.parseInt(arguments.get(1));
+            List<Integer> intArguments = castToIntArguments(arguments);
+            int dividend = intArguments.get(0);
+            int divisor = intArguments.get(1);
+            int result = dividend / divisor;
 
-            return String.valueOf(dividend / divisor);
+            return new Constant<>(result, String.valueOf(result));
         });
     }
 
     private static void defineMultiplication() {
         MATH_PROCEDURES.put("*", arguments -> {
             checkMinimalArity(arguments.size(), 1);
-            return arguments.stream()
-                    .map(Integer::valueOf)
-                    .reduce(1, (a, b) -> a * b)
-                    .toString();
+            List<Integer> intArguments = castToIntArguments(arguments);
+            int product = intArguments.stream().reduce(1, (a, b) -> a * b);
+            return new Constant<>(product, String.valueOf(product));
         });
     }
 
     private static void defineSubtraction() {
         MATH_PROCEDURES.put("-", arguments -> {
             checkMinimalArity(arguments.size(), 1);
-            List<Integer> intArguments = arguments.stream()
-                    .map(Integer::valueOf)
-                    .collect(Collectors.toList());
+            List<Integer> intArguments = castToIntArguments(arguments);
             Integer firstArgument = intArguments.stream().findFirst().get();
             List<Integer> tailArguments = intArguments.subList(1, intArguments.size());
+            int result;
 
             if (tailArguments.isEmpty()) {
-                return String.valueOf(-firstArgument);
+                result = -firstArgument;
+            } else {
+                result = tailArguments.stream().reduce(firstArgument, (a, b) -> a - b);
             }
 
-            return tailArguments.stream()
-                    .reduce(firstArgument, (a, b) -> a - b)
-                    .toString();
+            return new Constant<>(result, String.valueOf(result));
         });
     }
 
     private static void defineAddition() {
         MATH_PROCEDURES.put("+", arguments -> {
             checkMinimalArity(arguments.size(), 1);
-            return arguments.stream()
-                    .map(Integer::valueOf)
-                    .reduce(0, (a, b) -> a + b)
-                    .toString();
+            List<Integer> intArguments = castToIntArguments(arguments);
+            int sum =  intArguments.stream().reduce(0, (a, b) -> a + b);
+            return new Constant<>(sum, String.valueOf(sum));
         });
     }
 
@@ -79,6 +78,15 @@ public abstract class PredefinedProcedures {
             String message = "Arguments count %d does not match expected minimal arity of %d";
             throw new ParseCancellationException(String.format(message, argumentsCount, minimalArity));
         }
+    }
+
+    private static List<Integer> castToIntArguments(List<Datum> arguments) {
+        List<Integer> intArguments = new ArrayList<>();
+        for (Datum datum : arguments) {
+            Constant<Integer> integerConstant = (Constant<Integer>) datum;
+            intArguments.add(integerConstant.getValue());
+        }
+        return intArguments;
     }
 
 }

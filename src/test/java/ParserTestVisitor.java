@@ -1,7 +1,7 @@
-import lang.Constant;
-import lang.PredefinedProcedures;
-import lang.Procedure;
+import lang.*;
+import lang.Vector;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -9,13 +9,8 @@ import java.util.stream.Collectors;
 public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     private static final String NO_VALUE = "";
-    private static final String LIST_START = "(";
-    private static final String LIST_END = ")";
-    private static final String VECTOR_START = "#(";
-    private static final String VECTOR_END = ")";
-    private static final String QUOTATION_SYMBOL = "'";
 
-    public Map<String, String> variableDefinitions = new HashMap<>();
+    public Map<String, Datum> variableDefinitions = new HashMap<>();
     private Map<String, Procedure> definedProcedures = new HashMap<>();
 
     public ParserTestVisitor() {
@@ -24,7 +19,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     @Override
     public List<String> visitExpression(SchemeParser.ExpressionContext expression) {
-        return Arrays.asList(evaluateExpression(expression));
+        return Arrays.asList(evaluateExpression(expression).getText());
     }
 
     @Override
@@ -46,14 +41,14 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     private String processVariableDefinitions(SchemeParser.Variable_definitionContext variableDefinition) {
         String identifier = variableDefinition.IDENTIFIER().getText();
-        String value = evaluateExpression(variableDefinition.expression());
-        variableDefinitions.put(identifier, value);
+        Datum datum = evaluateExpression(variableDefinition.expression());
+        variableDefinitions.put(identifier, datum);
         return NO_VALUE;
     }
 
-    private String evaluateExpression(SchemeParser.ExpressionContext expression) {
+    private Datum evaluateExpression(SchemeParser.ExpressionContext expression) {
         if (expression.constant() != null) {
-            return extractConstant(expression.constant()).getText();
+            return extractConstant(expression.constant());
         }
         if (expression.quotation() != null) {
             return applyQuotation(expression.quotation());
@@ -61,21 +56,17 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
         if (expression.application() != null) {
             return evaluateApplication(expression.application());
         }
-        String identifier = expression.IDENTIFIER().getText();
-        if (variableDefinitions.containsKey(identifier)) {
-            return variableDefinitions.get(identifier);
-        }
-        throw new ParseCancellationException(String.format("Undefined variable %s", identifier));
+        return evaluateVariable(expression.IDENTIFIER());
     }
 
-    private String evaluateApplication(SchemeParser.ApplicationContext application) {
+    private Datum evaluateApplication(SchemeParser.ApplicationContext application) {
         String procedureName = application.IDENTIFIER().getText();
 
         if (!definedProcedures.containsKey(procedureName)) {
             throw new ParseCancellationException(String.format("Undefined procedure %s", procedureName));
         } else {
             Procedure procedure = definedProcedures.get(procedureName);
-            List<String> arguments = application.expression()
+            List<Datum> arguments = application.expression()
                     .stream()
                     .map(this::evaluateExpression)
                     .collect(Collectors.toList());
@@ -83,66 +74,59 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
         }
     }
 
-    private String applyQuotation(SchemeParser.QuotationContext quotation) {
+    private Datum applyQuotation(SchemeParser.QuotationContext quotation) {
+        Datum datum;
         if (quotation.datum() != null) {
-            SchemeParser.DatumContext datum = quotation.datum();
+            SchemeParser.DatumContext datumContext = quotation.datum();
 
-            if (datum.constant() != null) {
-                return extractConstant(datum.constant()).toString();
+            if (datumContext.constant() != null) {
+                datum = extractConstant(datumContext.constant());
+            } else if (datumContext.list() != null) {
+                datum = new SList(collectElements(datumContext.list().datum()));
+            } else if (datumContext.vector() != null) {
+                datum = new Vector(collectElements(datumContext.vector().datum()));
+            } else {
+                /*
+                    TODO
+                    Quoted strings are symbols in Scheme
+                 */
+                String value = datumContext.IDENTIFIER().getText();
+                datum = new Constant<>(value, value);
             }
 
-            if (datum.list() != null) {
-                return collectListElements(datum.list());
-            }
-
-            if (datum.vector() != null) {
-                return collectVectorElements(datum.vector());
-            }
-
-            return datum.IDENTIFIER().getText();
+        } else {
+            datum = applyQuotation(quotation.quotation());
         }
 
-        return QUOTATION_SYMBOL + applyQuotation(quotation.quotation());
+        return new Quotation(datum);
     }
 
-    private String collectVectorElements(SchemeParser.VectorContext vector) {
-        return collectSequenceElements(vector.datum(), VECTOR_START, VECTOR_END);
+    private Datum evaluateVariable(TerminalNode identifier) {
+        String variableIdentifier = identifier.getText();
+        if (variableDefinitions.containsKey(variableIdentifier)) {
+            return variableDefinitions.get(variableIdentifier);
+        }
+        throw new ParseCancellationException(String.format("Undefined variable %s", variableIdentifier));
     }
 
-    private String collectListElements(SchemeParser.ListContext list) {
-        return collectSequenceElements(list.datum(), LIST_START, LIST_END);
-    }
-
-    private String collectSequenceElements(List<SchemeParser.DatumContext> data,
-                                           String seqStartSymbol,
-                                           String seqEndSymbol) {
-        String sequence = seqStartSymbol;
-        sequence += collectData(data);
-        sequence += seqEndSymbol;
-        return sequence;
-    }
-
-    private String collectData(List<SchemeParser.DatumContext> data) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < data.size(); i++) {
-            SchemeParser.DatumContext datum = data.get(i);
+    private List<Datum> collectElements(List<SchemeParser.DatumContext> data) {
+        List<Datum> elements = new ArrayList<>();
+        for (SchemeParser.DatumContext datum : data) {
             if (datum.list() != null) {
-                builder.append(collectListElements(datum.list()));
+                elements.add(new SList(collectElements(datum.list().datum())));
             }
             if (datum.vector() != null) {
-                builder.append(collectVectorElements(datum.vector()));
+                elements.add(new Vector(collectElements(datum.vector().datum())));
             }
             if (datum.constant() != null) {
-                builder.append(extractConstant(datum.constant()));
+                elements.add(extractConstant(datum.constant()));
             }
             if (datum.IDENTIFIER() != null) {
-                builder.append(datum.IDENTIFIER().getText());
-            }
-            if (i < data.size() - 1) {
-                builder.append(" ");
+                String value = datum.IDENTIFIER().getText();
+                elements.add(new Constant<>(value, value));
             }
         }
-        return builder.toString();
+        return elements;
     }
 
     private Constant extractConstant(SchemeParser.ConstantContext constant) {

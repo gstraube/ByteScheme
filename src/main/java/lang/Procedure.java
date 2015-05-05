@@ -4,6 +4,6 @@ import java.util.List;
 
 public interface Procedure {
 
-    public abstract String apply(List<String> arguments);
+    public abstract Datum apply(List<Datum> arguments);
 
 }

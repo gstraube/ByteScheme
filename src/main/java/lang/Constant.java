@@ -1,6 +1,6 @@
 package lang;
 
-public class Constant<T> {
+public class Constant<T> implements Datum {
 
     private T value;
     private String text;
@@ -8,6 +8,10 @@ public class Constant<T> {
     public Constant(T value, String text) {
         this.value = value;
         this.text = text;
+    }
+
+    public T getValue() {
+        return value;
     }
 
     public String getText() {
