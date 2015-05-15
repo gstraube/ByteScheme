@@ -2,6 +2,7 @@ package lang;
 
 public class Quotation implements Datum {
 
+    public static final String QUOTATION_SYMBOL = "'";
     private Datum quotedValue;
 
     public Quotation(Datum quotedValue) {
@@ -10,10 +11,6 @@ public class Quotation implements Datum {
 
     @Override
     public String getText() {
-        String text = "";
-        if (quotedValue instanceof Quotation) {
-            text += "'";
-        }
-        return text + quotedValue.getText();
+        return QUOTATION_SYMBOL + quotedValue.getText();
     }
 }

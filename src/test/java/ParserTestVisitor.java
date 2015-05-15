@@ -19,7 +19,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     @Override
     public List<String> visitExpression(SchemeParser.ExpressionContext expression) {
-        return Arrays.asList(evaluateExpression(expression).getText());
+        return Collections.singletonList(evaluateExpression(expression).getText());
     }
 
     @Override
@@ -95,10 +95,10 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
             }
 
         } else {
-            datum = applyQuotation(quotation.quotation());
+            datum = new Quotation(applyQuotation(quotation.quotation()));
         }
 
-        return new Quotation(datum);
+        return datum;
     }
 
     private Datum evaluateVariable(TerminalNode identifier) {
