@@ -184,6 +184,14 @@ public class ParserTest {
         visitParseTreeForInput("(car '())");
     }
 
+    @Test
+    public void cdr_returns_all_elements_of_a_list_except_the_first_one() {
+        String input = "(cdr '(1 2 3))";
+        Assert.assertThat(visitParseTreeForInput(input), is("(2 3)"));
+        input = "(cdr '((\"abc\" \"xyz\") 5 (6 7) 8))";
+        Assert.assertThat(visitParseTreeForInput(input), is("(5 (6 7) 8)"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

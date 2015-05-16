@@ -33,4 +33,8 @@ public class SList implements Sequence {
     public int length() {
         return elements.size();
     }
+
+    public SList cdr() {
+        return new SList(elements.subList(1, elements.size()));
+    }
 }

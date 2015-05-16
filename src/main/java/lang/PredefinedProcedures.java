@@ -14,6 +14,7 @@ public abstract class PredefinedProcedures {
 
     static {
         defineCar();
+        defineCdr();
         defineAddition();
         defineSubtraction();
         defineMultiplication();
@@ -28,6 +29,14 @@ public abstract class PredefinedProcedures {
                 throw new ParseCancellationException("Wrong argument type: Expected pair");
             }
             return list.car();
+        });
+    }
+
+    private static void defineCdr() {
+        LIST_PROCEDURES.put("cdr", arguments -> {
+            checkExactArity(arguments.size(), 1);
+            SList list = castToList(arguments);
+            return list.cdr();
         });
     }
 
