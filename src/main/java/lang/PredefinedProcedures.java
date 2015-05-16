@@ -10,12 +10,33 @@ import java.util.Map;
 public abstract class PredefinedProcedures {
 
     public static final Map<String, Procedure> MATH_PROCEDURES = new HashMap<>();
+    public static final Map<String, Procedure> LIST_PROCEDURES = new HashMap<>();
 
     static {
+        defineCar();
         defineAddition();
         defineSubtraction();
         defineMultiplication();
         defineQuotient();
+    }
+
+    private static void defineCar() {
+        LIST_PROCEDURES.put("car", arguments -> {
+            checkExactArity(arguments.size(), 1);
+            SList list = castToList(arguments);
+            if (list.length() == 0) {
+                throw new ParseCancellationException("Wrong argument type: Expected pair");
+            }
+            return list.car();
+        });
+    }
+
+    private static SList castToList(List<Datum> arguments) {
+        Datum argument = arguments.get(0);
+        if (!(argument instanceof SList)) {
+            throw new ParseCancellationException("Wrong argument type: Expected pair");
+        }
+        return (SList) arguments.get(0);
     }
 
     private static void defineQuotient() {

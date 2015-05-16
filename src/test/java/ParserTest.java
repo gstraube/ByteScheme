@@ -168,6 +168,22 @@ public class ParserTest {
         visitParseTreeForInput("(quotient 1 2 3)");
     }
 
+    @Test
+    public void car_returns_the_first_element_of_the_list() {
+        String input = "(car '(1 2 3))";
+        Assert.assertThat(visitParseTreeForInput(input), is("1"));
+        input = "(car '((\"abc\" \"xyz\") 5 (6 7) 8))";
+        Assert.assertThat(visitParseTreeForInput(input), is("(\"abc\" \"xyz\")"));
+    }
+
+    @Test
+    public void car_on_the_empty_list_causes_an_exception() {
+        expectedException.expect(ParseCancellationException.class);
+        expectedException.expectMessage("Wrong argument type: Expected pair");
+
+        visitParseTreeForInput("(car '())");
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

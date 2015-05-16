@@ -15,6 +15,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     public ParserTestVisitor() {
         definedProcedures.putAll(PredefinedProcedures.MATH_PROCEDURES);
+        definedProcedures.putAll(PredefinedProcedures.LIST_PROCEDURES);
     }
 
     @Override

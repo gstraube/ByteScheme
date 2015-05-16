@@ -26,4 +26,11 @@ public class SList implements Sequence {
         return builder.toString();
     }
 
+    public Datum car() {
+        return elements.get(0);
+    }
+
+    public int length() {
+        return elements.size();
+    }
 }
