@@ -36,6 +36,9 @@ public abstract class PredefinedProcedures {
         LIST_PROCEDURES.put("cdr", arguments -> {
             checkExactArity(arguments.size(), 1);
             SList list = castToList(arguments);
+            if (list.length() == 0) {
+                throw new ParseCancellationException("Wrong argument type: Expected pair");
+            }
             return list.cdr();
         });
     }

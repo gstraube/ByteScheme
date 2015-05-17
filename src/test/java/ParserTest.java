@@ -192,6 +192,14 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput(input), is("(5 (6 7) 8)"));
     }
 
+    @Test
+    public void cdr_on_the_empty_list_causes_an_exception() {
+        expectedException.expect(ParseCancellationException.class);
+        expectedException.expectMessage("Wrong argument type: Expected pair");
+
+        visitParseTreeForInput("(cdr '())");
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
