@@ -36,6 +36,9 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
     }
 
     private void processProcedureDefinitions(SchemeParser.Procedure_definitionContext procedureDefinition) {
+        List<SchemeParser.DefinitionContext> definitions = procedureDefinition.definition();
+        definitions.forEach(this::visitDefinition);
+
         String procedureName = procedureDefinition.proc_name().IDENTIFIER().getText();
 
         List<SchemeParser.ExpressionContext> expressions = procedureDefinition.expression();

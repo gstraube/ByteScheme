@@ -213,6 +213,12 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput(input), is("123"));
     }
 
+    @Test
+    public void a_procedure_definition_can_contain_definitions() throws Exception {
+        String input = "(define (foo) (define bar \"a_string\") bar) (foo)";
+        Assert.assertThat(visitParseTreeForInput(input), is("\"a_string\""));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
