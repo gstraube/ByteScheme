@@ -207,6 +207,12 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput(input), is("42"));
     }
 
+    @Test
+    public void a_variable_can_be_referenced_in_the_body_of_a_procedure_definition() {
+        String input = "(define foo 123) (define (bar) foo) (bar)";
+        Assert.assertThat(visitParseTreeForInput(input), is("123"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

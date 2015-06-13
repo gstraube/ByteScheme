@@ -52,7 +52,11 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
             if (lastExpression.constant() != null) {
                 Datum constant = extractConstant(lastExpression.constant());
                 definedProcedures.put(procedureName, arguments -> constant);
+            } else if (lastExpression.IDENTIFIER() != null) {
+                Datum variableValue = evaluateVariable(lastExpression.IDENTIFIER());
+                definedProcedures.put(procedureName, arguments -> variableValue);
             }
+
         }
     }
 
