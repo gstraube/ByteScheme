@@ -52,16 +52,18 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
                 for side effects such as printing.
              */
             SchemeParser.ExpressionContext lastExpression = expressions.get(expressions.size() - 1);
+            final Datum value;
             if (lastExpression.constant() != null) {
-                Datum constant = extractConstant(lastExpression.constant());
-                definedProcedures.put(procedureName, arguments -> constant);
+                value = extractConstant(lastExpression.constant());
             } else if (lastExpression.IDENTIFIER() != null) {
-                Datum variableValue = evaluateVariable(lastExpression.IDENTIFIER());
-                definedProcedures.put(procedureName, arguments -> variableValue);
+                value = evaluateVariable(lastExpression.IDENTIFIER());
             } else if (lastExpression.quotation() != null) {
-                Datum quotation = applyQuotation(lastExpression.quotation());
-                definedProcedures.put(procedureName, arguments -> quotation);
+                value = applyQuotation(lastExpression.quotation());
+            } else {
+                throw new ParseCancellationException(
+                        String.format("Could not evaluate body of procedure %s", procedureName));
             }
+            definedProcedures.put(procedureName, arguments -> value);
         }
     }
 
