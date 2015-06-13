@@ -43,7 +43,8 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
         List<SchemeParser.ExpressionContext> expressions = procedureDefinition.expression();
         if (expressions.size() == 0) {
-            throw new ParseCancellationException(String.format("Body must contain an expression"));
+            throw new ParseCancellationException(
+                    String.format("Body of procedure %s does not contain an expression", procedureName));
         } else {
             /*
                 While the body of a procedure can contain multiple expressions,
