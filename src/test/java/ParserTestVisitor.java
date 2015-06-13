@@ -30,6 +30,33 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
     }
 
     @Override
+    public List<String> visitProcedure_definition(SchemeParser.Procedure_definitionContext procedureDefinition) {
+        processProcedureDefinitions(procedureDefinition);
+        return Collections.emptyList();
+    }
+
+    private void processProcedureDefinitions(SchemeParser.Procedure_definitionContext procedureDefinition) {
+        String procedureName = procedureDefinition.proc_name().IDENTIFIER().getText();
+
+        List<SchemeParser.ExpressionContext> expressions = procedureDefinition.expression();
+        if (expressions.size() == 0) {
+            throw new ParseCancellationException(String.format("Body must contain an expression"));
+        } else {
+            /*
+                While the body of a procedure can contain multiple expressions,
+                only the value of the last expression is returned when calling
+                the procedure. The evaluation of the other expressions can be used
+                for side effects such as printing.
+             */
+            SchemeParser.ExpressionContext lastExpression = expressions.get(expressions.size() - 1);
+            if (lastExpression.constant() != null) {
+                Datum constant = extractConstant(lastExpression.constant());
+                definedProcedures.put(procedureName, arguments -> constant);
+            }
+        }
+    }
+
+    @Override
     protected List<String> defaultResult() {
         return new ArrayList<>();
     }

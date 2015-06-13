@@ -200,6 +200,13 @@ public class ParserTest {
         visitParseTreeForInput("(cdr '())");
     }
 
+    @Test
+    public void it_is_possible_to_define_a_procedure_which_returns_a_constant() {
+        String input = "(define (the_answer) 42)";
+        input += "(the_answer)";
+        Assert.assertThat(visitParseTreeForInput(input), is("42"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
