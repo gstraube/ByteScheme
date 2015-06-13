@@ -219,6 +219,12 @@ public class ParserTest {
         Assert.assertThat(visitParseTreeForInput(input), is("\"a_string\""));
     }
 
+    @Test
+    public void a_procedure_definition_can_contain_a_quotation_in_its_body() throws Exception {
+        String input = "(define (foo) '(1 \"a_string\" (3 #t) #\\a)) (foo)";
+        Assert.assertThat(visitParseTreeForInput(input), is("(1 \"a_string\" (3 #t) #\\a)"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

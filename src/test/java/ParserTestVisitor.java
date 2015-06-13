@@ -58,8 +58,10 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
             } else if (lastExpression.IDENTIFIER() != null) {
                 Datum variableValue = evaluateVariable(lastExpression.IDENTIFIER());
                 definedProcedures.put(procedureName, arguments -> variableValue);
+            } else if (lastExpression.quotation() != null) {
+                Datum quotation = applyQuotation(lastExpression.quotation());
+                definedProcedures.put(procedureName, arguments -> quotation);
             }
-
         }
     }
 
