@@ -153,6 +153,12 @@ public class ParserTest {
     }
 
     @Test
+    public void variables_can_be_referenced_in_procedure_call() {
+        String input = "(define foo 2) (+ foo 1)";
+        Assert.assertThat(visitParseTreeForInput(input), is("3"));
+    }
+
+    @Test
     public void passing_less_than_the_minimal_expected_number_of_arguments_to_a_procedure_causes_an_error() {
         expectedException.expect(ParseCancellationException.class);
         expectedException.expectMessage("Arguments count 0 does not match expected minimal arity of 1");
@@ -223,6 +229,12 @@ public class ParserTest {
     public void a_procedure_definition_can_contain_a_quotation_in_its_body() throws Exception {
         String input = "(define (foo) '(1 \"a_string\" (3 #t) #\\a)) (foo)";
         Assert.assertThat(visitParseTreeForInput(input), is("(1 \"a_string\" (3 #t) #\\a)"));
+    }
+
+    @Test
+    public void a_procedure_can_call_other_procedures_in_its_body() throws Exception {
+        String input = "(define (double x) (* x 2)) (double 12)";
+        Assert.assertThat(visitParseTreeForInput(input), is("24"));
     }
 
     private String visitParseTreeForInput(String input) {
