@@ -12,6 +12,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     public Map<String, Datum> variableDefinitions = new HashMap<>();
     private Map<String, Procedure> definedProcedures = new HashMap<>();
+    private Map<String, Datum> localBindings = new HashMap<>();
 
     public ParserTestVisitor() {
         definedProcedures.putAll(PredefinedProcedures.MATH_PROCEDURES);
@@ -53,19 +54,48 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
                 for side effects such as printing.
              */
             SchemeParser.ExpressionContext lastExpression = expressions.get(expressions.size() - 1);
-            final Datum value;
-            if (lastExpression.constant() != null) {
-                value = extractConstant(lastExpression.constant());
-            } else if (lastExpression.IDENTIFIER() != null) {
-                value = evaluateVariable(lastExpression.IDENTIFIER());
-            } else if (lastExpression.quotation() != null) {
-                value = applyQuotation(lastExpression.quotation());
+
+            List<SchemeParser.ParamContext> parameters = procedureDefinition.param();
+            if (lastExpression.application() != null) {
+                defineProcedure(procedureName, lastExpression, parameters);
             } else {
-                throw new ParseCancellationException(
-                        String.format("Could not evaluate body of procedure %s", procedureName));
+                final Datum value;
+                if (lastExpression.constant() != null) {
+                    value = extractConstant(lastExpression.constant());
+                } else if (lastExpression.IDENTIFIER() != null) {
+                    value = evaluateVariable(lastExpression.IDENTIFIER());
+                } else if (lastExpression.quotation() != null) {
+                    value = applyQuotation(lastExpression.quotation());
+                } else {
+                    throw new ParseCancellationException(
+                            String.format("Could not evaluate body of procedure %s", procedureName));
+                }
+                definedProcedures.put(procedureName, arguments -> value);
             }
-            definedProcedures.put(procedureName, arguments -> value);
         }
+    }
+
+    private void defineProcedure(String procedureName, SchemeParser.ExpressionContext lastExpression, List<SchemeParser.ParamContext> parameters) {
+        Procedure procedure = arguments -> {
+            if (parameters.size() != arguments.size()) {
+                throw new ParseCancellationException(
+                        String.format("Expected %d argument(s) but got %d argument(s)",
+                                parameters.size(), arguments.size()));
+            }
+
+            int i = 0;
+            for (SchemeParser.ParamContext parameter : parameters) {
+                localBindings.put(parameter.getText(), arguments.get(i));
+                i++;
+            }
+
+            Datum value = evaluateApplication(lastExpression.application());
+
+            localBindings.clear();
+
+            return value;
+        };
+        definedProcedures.put(procedureName, procedure);
     }
 
     @Override
@@ -143,6 +173,9 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
 
     private Datum evaluateVariable(TerminalNode identifier) {
         String variableIdentifier = identifier.getText();
+        if (localBindings.containsKey(variableIdentifier)) {
+            return localBindings.get(variableIdentifier);
+        }
         if (variableDefinitions.containsKey(variableIdentifier)) {
             return variableDefinitions.get(variableIdentifier);
         }

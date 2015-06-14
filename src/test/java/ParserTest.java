@@ -235,6 +235,19 @@ public class ParserTest {
     public void a_procedure_can_call_other_procedures_in_its_body() throws Exception {
         String input = "(define (double x) (* x 2)) (double 12)";
         Assert.assertThat(visitParseTreeForInput(input), is("24"));
+        input = "(define (square_and_add x y) (+ (* x x) (* y y))) (square_and_add 3 4)";
+        Assert.assertThat(visitParseTreeForInput(input), is("25"));
+        input = "(define (add x y) (+ x y)) (define (add_1 x) (add x 1)) (add_1 6)";
+        Assert.assertThat(visitParseTreeForInput(input), is("7"));
+    }
+
+    @Test
+    public void an_error_occurs_when_the_number_of_parameters_and_actual_arguments_does_not_match() throws Exception {
+        expectedException.expect(ParseCancellationException.class);
+        expectedException.expectMessage("Expected 2 argument(s) but got 1 argument(s)");
+
+        String input = "(define (add x y) (+ x y)) (add 12)";
+        Assert.assertThat(visitParseTreeForInput(input), is("25"));
     }
 
     private String visitParseTreeForInput(String input) {
