@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
+public class ParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
 
     private static final String NO_VALUE = "";
 
@@ -14,7 +14,7 @@ public class ParserTestVisitor extends SchemeBaseVisitor<List<String>> {
     private Map<String, Procedure> definedProcedures = new HashMap<>();
     private Map<String, Datum> localBindings = new HashMap<>();
 
-    public ParserTestVisitor() {
+    public ParseTreeVisitor() {
         definedProcedures.putAll(PredefinedProcedures.MATH_PROCEDURES);
         definedProcedures.putAll(PredefinedProcedures.LIST_PROCEDURES);
     }
