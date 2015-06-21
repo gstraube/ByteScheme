@@ -12,12 +12,12 @@ import parser.ErrorListener;
 
 import java.util.List;
 
-public class ParseTreeVisitorTest {
+public class SchemeParseTreeVisitorTest {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    ParseTreeVisitor parseTreeVisitor;
+    SchemeParseTreeVisitor schemeParseTreeVisitor;
     public static final String[] CONSTANTS = new String[]{
             "1", "42", "-1237", "#t",
             "#\\λ", "#\\newline", "#\\space", "\"a string\""
@@ -25,7 +25,7 @@ public class ParseTreeVisitorTest {
 
     @Before
     public void initializeVisitor() {
-        parseTreeVisitor = new ParseTreeVisitor();
+        schemeParseTreeVisitor = new SchemeParseTreeVisitor();
     }
 
     @Test
@@ -53,7 +53,7 @@ public class ParseTreeVisitorTest {
     public void it_is_possible_to_define_a_variable() {
         for (String constant : CONSTANTS) {
             visitParseTreeForInput(String.format("(define a_variable %s)", constant));
-            Assert.assertThat(parseTreeVisitor.variableDefinitions.get("a_variable").getText(), Matchers.is(constant));
+            Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a_variable").getText(), Matchers.is(constant));
         }
     }
 
@@ -61,9 +61,9 @@ public class ParseTreeVisitorTest {
     public void it_is_possible_to_reference_a_variable() {
         visitParseTreeForInput("(define a_variable 12) (define a_second_variable a_variable)");
 
-        Assert.assertThat(parseTreeVisitor.variableDefinitions.size(), Matchers.is(2));
-        Assert.assertThat(parseTreeVisitor.variableDefinitions.get("a_variable").getText(), Matchers.is("12"));
-        Assert.assertThat(parseTreeVisitor.variableDefinitions.get("a_second_variable").getText(), Matchers.is("12"));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.size(), Matchers.is(2));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a_variable").getText(), Matchers.is("12"));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a_second_variable").getText(), Matchers.is("12"));
     }
 
     @Test
@@ -78,10 +78,10 @@ public class ParseTreeVisitorTest {
     public void multiple_definitions_can_be_grouped_using_the_begin_keyword() {
         visitParseTreeForInput("(begin (begin (define a \"foo\") (define b 21)) (define c #t))");
 
-        Assert.assertThat(parseTreeVisitor.variableDefinitions.size(), Matchers.is(3));
-        Assert.assertThat(parseTreeVisitor.variableDefinitions.get("a").getText(), Matchers.is("\"foo\""));
-        Assert.assertThat(parseTreeVisitor.variableDefinitions.get("b").getText(), Matchers.is("21"));
-        Assert.assertThat(parseTreeVisitor.variableDefinitions.get("c").getText(), Matchers.is("#t"));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.size(), Matchers.is(3));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a").getText(), Matchers.is("\"foo\""));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("b").getText(), Matchers.is("21"));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("c").getText(), Matchers.is("#t"));
     }
 
     @Test
@@ -261,8 +261,8 @@ public class ParseTreeVisitorTest {
         parser.addErrorListener(ErrorListener.INSTANCE);
 
         ParseTree parseTree = parser.program();
-        parseTreeVisitor = new ParseTreeVisitor();
-        List<String> output = parseTreeVisitor.visit(parseTree);
+        schemeParseTreeVisitor = new SchemeParseTreeVisitor();
+        List<String> output = schemeParseTreeVisitor.visit(parseTree);
 
         return  String.join(" ", output);
     }
