@@ -41,7 +41,7 @@ public abstract class PredefinedProcedures {
                 return isEqual ? new Constant<>(true, "#t") : new Constant<>(false, "#f");
             }
 
-            return new Constant<>(true, "#t");
+            return new Constant<>(true, "#f");
         });
     }
 
