@@ -53,7 +53,7 @@ public class ReadEvalPrintLoop {
     }
 
     private static void printPromptSymbol() {
-        System.out.print(PROMPT_SYMBOL);
+        outputStream.print(PROMPT_SYMBOL);
     }
 
     private static String visitParseTreeForInput(String input) {
