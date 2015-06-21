@@ -69,7 +69,7 @@ public class SchemeParseTreeVisitorTest {
     @Test
     public void trying_to_reference_an_undefined_variable_causes_an_exception() {
         expectedException.expect(ParseCancellationException.class);
-        expectedException.expectMessage("Undefined variable undefined_variable");
+        expectedException.expectMessage("Undefined variable 'undefined_variable'");
 
         visitParseTreeForInput("(define a_variable undefined_variable)");
     }
@@ -134,7 +134,7 @@ public class SchemeParseTreeVisitorTest {
     @Test
     public void an_application_with_an_undefined_procedure_leads_to_an_error() {
         expectedException.expect(ParseCancellationException.class);
-        expectedException.expectMessage("Undefined procedure func");
+        expectedException.expectMessage("Undefined procedure 'func'");
 
         visitParseTreeForInput("(func 1 2 3)");
     }

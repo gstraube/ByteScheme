@@ -68,7 +68,7 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
                     value = applyQuotation(lastExpression.quotation());
                 } else {
                     throw new ParseCancellationException(
-                            String.format("Could not evaluate body of procedure %s", procedureName));
+                            String.format("Could not evaluate body of procedure '%s'", procedureName));
                 }
                 definedProcedures.put(procedureName, arguments -> value);
             }
@@ -133,7 +133,7 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
         String procedureName = application.IDENTIFIER().getText();
 
         if (!definedProcedures.containsKey(procedureName)) {
-            throw new ParseCancellationException(String.format("Undefined procedure %s", procedureName));
+            throw new ParseCancellationException(String.format("Undefined procedure '%s'", procedureName));
         } else {
             Procedure procedure = definedProcedures.get(procedureName);
             List<Datum> arguments = application.expression()
@@ -179,7 +179,7 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
         if (variableDefinitions.containsKey(variableIdentifier)) {
             return variableDefinitions.get(variableIdentifier);
         }
-        throw new ParseCancellationException(String.format("Undefined variable %s", variableIdentifier));
+        throw new ParseCancellationException(String.format("Undefined variable '%s'", variableIdentifier));
     }
 
     private List<Datum> collectElements(List<SchemeParser.DatumContext> data) {
