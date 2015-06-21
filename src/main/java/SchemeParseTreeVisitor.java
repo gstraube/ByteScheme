@@ -17,6 +17,7 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
     public SchemeParseTreeVisitor() {
         definedProcedures.putAll(PredefinedProcedures.MATH_PROCEDURES);
         definedProcedures.putAll(PredefinedProcedures.LIST_PROCEDURES);
+        definedProcedures.putAll(PredefinedProcedures.EQUALITY_PROCEDURES);
     }
 
     @Override
@@ -218,7 +219,7 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
             return new Constant<>(text, text);
         }
         String text = constant.BOOLEAN().getText();
-        boolean value = Boolean.valueOf(text);
+        boolean value = text.equals("#t");
         return new Constant<>(value, text);
     }
 

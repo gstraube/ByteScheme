@@ -249,6 +249,26 @@ public class SchemeParseTreeVisitorTest {
         Assert.assertThat(visitParseTreeForInput(input), Matchers.is("25"));
     }
 
+    @Test
+    public void equal_returns_false_when_types_do_not_match() throws Exception {
+        String input = "(equal? 42 \"forty-two\")";
+        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#f"));
+        input = "(equal? '(1 2 3) #t)";
+        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#f"));
+    }
+
+    @Test
+    public void equal_returns_true_for_constants_with_matching_values_and_false_otherwise() {
+        String input = "(equal? 42 42)";
+        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#t"));
+        input = "(equal? #\\a #\\a)";
+        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#t"));
+        input = "(equal? \"a string\" \"a different string\")";
+        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#f"));
+        input = "(equal? #t #f)";
+        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#f"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

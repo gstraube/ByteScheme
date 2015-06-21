@@ -11,6 +11,7 @@ public abstract class PredefinedProcedures {
 
     public static final Map<String, Procedure> MATH_PROCEDURES = new HashMap<>();
     public static final Map<String, Procedure> LIST_PROCEDURES = new HashMap<>();
+    public static final Map<String, Procedure> EQUALITY_PROCEDURES = new HashMap<>();
 
     static {
         defineCar();
@@ -19,6 +20,29 @@ public abstract class PredefinedProcedures {
         defineSubtraction();
         defineMultiplication();
         defineQuotient();
+        defineEquality();
+    }
+
+    private static void defineEquality() {
+        EQUALITY_PROCEDURES.put("equal?", arguments -> {
+            checkExactArity(arguments.size(), 2);
+
+            Datum firstArgument = arguments.get(0);
+            Datum secondArgument = arguments.get(1);
+
+            if (!firstArgument.getType().equals(secondArgument.getType())) {
+                return new Constant<>(false, "#f");
+            }
+
+            if (firstArgument instanceof Constant) {
+                Constant firstConstant = (Constant) firstArgument;
+                Constant secondConstant = (Constant) secondArgument;
+                boolean isEqual = firstConstant.getValue().equals(secondConstant.getValue());
+                return isEqual ? new Constant<>(true, "#t") : new Constant<>(false, "#f");
+            }
+
+            return new Constant<>(true, "#t");
+        });
     }
 
     private static void defineCar() {

@@ -19,6 +19,11 @@ public class Constant<T> implements Datum {
     }
 
     @Override
+    public String getType() {
+        return getClass().getTypeName() + "#" + value.getClass().getTypeName();
+    }
+
+    @Override
     public String toString() {
         return text;
     }
