@@ -270,6 +270,30 @@ public class SchemeParseTreeVisitorTest {
         Assert.assertThat(visitParseTreeForInput(input), is("#f"));
     }
 
+    @Test
+    public void equal_returns_true_for_two_lists_containing_the_same_elements_and_false_otherwise() throws Exception {
+        String input = "(equal? '(1 \"foo\" 2 (#t 4) (5 6)) '(1 \"foo\" 2 (#t 4) (5 6)))";
+        Assert.assertThat(visitParseTreeForInput(input), is("#t"));
+        input = "(equal? '(1 2 3) '(4 5))";
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
+        input = "(equal? '(1 2 3) '())";
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
+        input = "(equal? '(1 2 3) '(1 2 #t))";
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
+    }
+
+    @Test
+    public void equal_returns_true_for_two_vectors_containing_the_same_elements_and_false_otherwise() throws Exception {
+        String input = "(equal? '#(#t (\"foo\" \"bar\") #(#\\a 2)) '#(#t (\"foo\" \"bar\") #(#\\a 2)))";
+        Assert.assertThat(visitParseTreeForInput(input), is("#t"));
+        input = "(equal? '#(1) '#(1 (2 1)))";
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
+        input = "(equal? '#(1 2 3) '#())";
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
+        input = "(equal? '#(1 2 3) '#(1 2 #t))";
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

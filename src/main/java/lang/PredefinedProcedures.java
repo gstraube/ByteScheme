@@ -2,10 +2,7 @@ package lang;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class PredefinedProcedures {
 
@@ -24,25 +21,50 @@ public abstract class PredefinedProcedures {
     }
 
     private static void defineEquality() {
-        EQUALITY_PROCEDURES.put("equal?", arguments -> {
-            checkExactArity(arguments.size(), 2);
+        EQUALITY_PROCEDURES.put("equal?", new Procedure() {
+            @Override
+            public Datum apply(List<Datum> arguments) {
+                checkExactArity(arguments.size(), 2);
 
-            Datum firstArgument = arguments.get(0);
-            Datum secondArgument = arguments.get(1);
+                Datum firstArgument = arguments.get(0);
+                Datum secondArgument = arguments.get(1);
 
-            if (!firstArgument.getType().equals(secondArgument.getType())) {
-                return new Constant<>(false, "#f");
+                if (!firstArgument.getType().equals(secondArgument.getType())) {
+                    return new Constant<>(false, "#f");
+                }
+
+                if (firstArgument instanceof Constant) {
+                    Constant firstConstant = (Constant) firstArgument;
+                    Constant secondConstant = (Constant) secondArgument;
+                    boolean isEqual = firstConstant.getValue().equals(secondConstant.getValue());
+                    return isEqual ? new Constant<>(true, "#t") : new Constant<>(false, "#f");
+                }
+
+                if (firstArgument instanceof Sequence) {
+                    List<Datum> firstArgElements = ((Sequence) firstArgument).getElements();
+                    List<Datum> secondArgElements = ((Sequence) secondArgument).getElements();
+
+                    if (firstArgElements.size() != secondArgElements.size()) {
+                        return new Constant<>(true, "#f");
+                    }
+
+                    int i = 0;
+                    for (Datum element : firstArgElements) {
+                        Constant<Boolean> result = (Constant<Boolean>) this.apply(Arrays.asList(element,
+                                secondArgElements.get(i)));
+                        if (!result.getValue()) {
+                            return result;
+                        }
+                        i++;
+                    }
+
+                    return new Constant<>(true, "#t");
+                }
+
+                return new Constant<>(true, "#f");
             }
-
-            if (firstArgument instanceof Constant) {
-                Constant firstConstant = (Constant) firstArgument;
-                Constant secondConstant = (Constant) secondArgument;
-                boolean isEqual = firstConstant.getValue().equals(secondConstant.getValue());
-                return isEqual ? new Constant<>(true, "#t") : new Constant<>(false, "#f");
-            }
-
-            return new Constant<>(true, "#f");
         });
+
     }
 
     private static void defineCar() {
@@ -118,7 +140,7 @@ public abstract class PredefinedProcedures {
         MATH_PROCEDURES.put("+", arguments -> {
             checkMinimalArity(arguments.size(), 1);
             List<Integer> intArguments = castToIntArguments(arguments);
-            int sum =  intArguments.stream().reduce(0, (a, b) -> a + b);
+            int sum = intArguments.stream().reduce(0, (a, b) -> a + b);
             return new Constant<>(sum, String.valueOf(sum));
         });
     }

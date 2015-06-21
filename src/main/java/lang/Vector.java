@@ -1,6 +1,7 @@
 package lang;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Vector implements Sequence {
 
@@ -23,5 +24,10 @@ public class Vector implements Sequence {
         }
         builder.append(")");
         return builder.toString();
+    }
+
+    @Override
+    public List<Datum> getElements() {
+        return elements;
     }
 }

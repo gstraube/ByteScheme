@@ -2,6 +2,7 @@ package lang;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class SList implements Sequence {
 
@@ -24,6 +25,11 @@ public class SList implements Sequence {
         }
         builder.append(")");
         return builder.toString();
+    }
+
+    @Override
+    public List<Datum> getElements() {
+        return elements;
     }
 
     public Datum car() {
