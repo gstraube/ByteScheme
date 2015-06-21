@@ -2,7 +2,6 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -11,6 +10,8 @@ import org.junit.rules.ExpectedException;
 import parser.ErrorListener;
 
 import java.util.List;
+
+import static org.hamcrest.Matchers.is;
 
 public class SchemeParseTreeVisitorTest {
 
@@ -31,7 +32,7 @@ public class SchemeParseTreeVisitorTest {
     @Test
     public void constants_are_parsed_correctly() {
         for (String constant : CONSTANTS) {
-            Assert.assertThat(visitParseTreeForInput(constant), Matchers.is(constant));
+            Assert.assertThat(visitParseTreeForInput(constant), is(constant));
         }
     }
 
@@ -53,7 +54,7 @@ public class SchemeParseTreeVisitorTest {
     public void it_is_possible_to_define_a_variable() {
         for (String constant : CONSTANTS) {
             visitParseTreeForInput(String.format("(define a_variable %s)", constant));
-            Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a_variable").getText(), Matchers.is(constant));
+            Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a_variable").getText(), is(constant));
         }
     }
 
@@ -61,9 +62,9 @@ public class SchemeParseTreeVisitorTest {
     public void it_is_possible_to_reference_a_variable() {
         visitParseTreeForInput("(define a_variable 12) (define a_second_variable a_variable)");
 
-        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.size(), Matchers.is(2));
-        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a_variable").getText(), Matchers.is("12"));
-        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a_second_variable").getText(), Matchers.is("12"));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.size(), is(2));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a_variable").getText(), is("12"));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a_second_variable").getText(), is("12"));
     }
 
     @Test
@@ -78,57 +79,57 @@ public class SchemeParseTreeVisitorTest {
     public void multiple_definitions_can_be_grouped_using_the_begin_keyword() {
         visitParseTreeForInput("(begin (begin (define a \"foo\") (define b 21)) (define c #t))");
 
-        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.size(), Matchers.is(3));
-        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a").getText(), Matchers.is("\"foo\""));
-        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("b").getText(), Matchers.is("21"));
-        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("c").getText(), Matchers.is("#t"));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.size(), is(3));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("a").getText(), is("\"foo\""));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("b").getText(), is("21"));
+        Assert.assertThat(schemeParseTreeVisitor.variableDefinitions.get("c").getText(), is("#t"));
     }
 
     @Test
     public void quoting_a_constant_once_returns_the_constant() {
         for (String constant : CONSTANTS) {
             String result = visitParseTreeForInput(String.format("(quote %s)", constant));
-            Assert.assertThat(result, Matchers.is(constant));
+            Assert.assertThat(result, is(constant));
             result = visitParseTreeForInput(String.format("'%s", constant));
-            Assert.assertThat(result, Matchers.is(constant));
+            Assert.assertThat(result, is(constant));
         }
     }
 
     @Test
     public void quoting_an_identifier_produces_a_symbol() {
-        Assert.assertThat(visitParseTreeForInput("(quote an_identifier)"), Matchers.is("an_identifier"));
+        Assert.assertThat(visitParseTreeForInput("(quote an_identifier)"), is("an_identifier"));
     }
 
     @Test
     public void quoting_a_sequence_of_data_in_parentheses_produces_a_list() {
         String listElements = "(15 (\"abc\" #t) 7 #(1 2 3) (#\\u #f) 2 \"a_string\")";
         String input = "(quote " + listElements + ")";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is(listElements));
+        Assert.assertThat(visitParseTreeForInput(input), is(listElements));
     }
 
     @Test
     public void multiple_quotation_is_possible() {
         String input = "(quote (quote (quote (1 2 3))))";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("''(1 2 3)"));
+        Assert.assertThat(visitParseTreeForInput(input), is("''(1 2 3)"));
     }
 
     @Test
     public void quoting_a_sequence_of_data_in_parentheses_and_prefixed_with_a_number_sign_produces_a_vector() {
         String listElements = "#(\"abc\" 1 #\\u 20 30 (#\\v #\\z #(1 2 3)))";
         String input = "(quote " + listElements + ")";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is(listElements));
+        Assert.assertThat(visitParseTreeForInput(input), is(listElements));
     }
 
     @Test
     public void all_character_symbols_are_supported() {
         String characterSymbolsInList = "(+ - ... !.. $.+ %.- &.! *.: /:. :+. <-. =. >. ?. ~. _. ^.)";
-        Assert.assertThat(visitParseTreeForInput("'" + characterSymbolsInList), Matchers.is(characterSymbolsInList));
+        Assert.assertThat(visitParseTreeForInput("'" + characterSymbolsInList), is(characterSymbolsInList));
     }
 
     @Test
     public void a_program_can_contain_multiple_expressions_on_the_top_level() {
         String input = "2 (define foo 3) \"bar\" foo #t (define baz #\\a) baz";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("2 \"bar\" 3 #t #\\a"));
+        Assert.assertThat(visitParseTreeForInput(input), is("2 \"bar\" 3 #t #\\a"));
     }
 
     @Test
@@ -142,19 +143,19 @@ public class SchemeParseTreeVisitorTest {
     @Test
     public void predefined_procedures_can_be_called() {
         String input = "(+ 2 3 (+ 10) (+ 3 7))";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("25"));
+        Assert.assertThat(visitParseTreeForInput(input), is("25"));
         input = "(- 10 (- 5 200) 375 (- 20))";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("-150"));
+        Assert.assertThat(visitParseTreeForInput(input), is("-150"));
         input = "(* 2 (* 5) 10 (* 3 7))";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("2100"));
+        Assert.assertThat(visitParseTreeForInput(input), is("2100"));
         input = "(quotient 10 (quotient 7 3))";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("5"));
+        Assert.assertThat(visitParseTreeForInput(input), is("5"));
     }
 
     @Test
     public void variables_can_be_referenced_in_procedure_call() {
         String input = "(define foo 2) (+ foo 1)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("3"));
+        Assert.assertThat(visitParseTreeForInput(input), is("3"));
     }
 
     @Test
@@ -176,9 +177,9 @@ public class SchemeParseTreeVisitorTest {
     @Test
     public void car_returns_the_first_element_of_the_list() {
         String input = "(car '(1 2 3))";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("1"));
+        Assert.assertThat(visitParseTreeForInput(input), is("1"));
         input = "(car '((\"abc\" \"xyz\") 5 (6 7) 8))";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("(\"abc\" \"xyz\")"));
+        Assert.assertThat(visitParseTreeForInput(input), is("(\"abc\" \"xyz\")"));
     }
 
     @Test
@@ -192,9 +193,9 @@ public class SchemeParseTreeVisitorTest {
     @Test
     public void cdr_returns_all_elements_of_a_list_except_the_first_one() {
         String input = "(cdr '(1 2 3))";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("(2 3)"));
+        Assert.assertThat(visitParseTreeForInput(input), is("(2 3)"));
         input = "(cdr '((\"abc\" \"xyz\") 5 (6 7) 8))";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("(5 (6 7) 8)"));
+        Assert.assertThat(visitParseTreeForInput(input), is("(5 (6 7) 8)"));
     }
 
     @Test
@@ -209,35 +210,35 @@ public class SchemeParseTreeVisitorTest {
     public void it_is_possible_to_define_a_procedure_which_returns_a_constant() {
         String input = "(define (the_answer) 42)";
         input += "(the_answer)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("42"));
+        Assert.assertThat(visitParseTreeForInput(input), is("42"));
     }
 
     @Test
     public void a_variable_can_be_referenced_in_the_body_of_a_procedure_definition() {
         String input = "(define foo 123) (define (bar) foo) (bar)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("123"));
+        Assert.assertThat(visitParseTreeForInput(input), is("123"));
     }
 
     @Test
     public void a_procedure_definition_can_contain_definitions() throws Exception {
         String input = "(define (foo) (define bar \"a_string\") bar) (foo)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("\"a_string\""));
+        Assert.assertThat(visitParseTreeForInput(input), is("\"a_string\""));
     }
 
     @Test
     public void a_procedure_definition_can_contain_a_quotation_in_its_body() throws Exception {
         String input = "(define (foo) '(1 \"a_string\" (3 #t) #\\a)) (foo)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("(1 \"a_string\" (3 #t) #\\a)"));
+        Assert.assertThat(visitParseTreeForInput(input), is("(1 \"a_string\" (3 #t) #\\a)"));
     }
 
     @Test
     public void a_procedure_can_call_other_procedures_in_its_body() throws Exception {
         String input = "(define (double x) (* x 2)) (double 12)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("24"));
+        Assert.assertThat(visitParseTreeForInput(input), is("24"));
         input = "(define (square_and_add x y) (+ (* x x) (* y y))) (square_and_add 3 4)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("25"));
+        Assert.assertThat(visitParseTreeForInput(input), is("25"));
         input = "(define (add x y) (+ x y)) (define (add_1 x) (add x 1)) (add_1 6)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("7"));
+        Assert.assertThat(visitParseTreeForInput(input), is("7"));
     }
 
     @Test
@@ -246,27 +247,27 @@ public class SchemeParseTreeVisitorTest {
         expectedException.expectMessage("Expected 2 argument(s) but got 1 argument(s)");
 
         String input = "(define (add x y) (+ x y)) (add 12)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("25"));
+        Assert.assertThat(visitParseTreeForInput(input), is("25"));
     }
 
     @Test
     public void equal_returns_false_when_types_do_not_match() throws Exception {
         String input = "(equal? 42 \"forty-two\")";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#f"));
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
         input = "(equal? '(1 2 3) #t)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#f"));
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
     }
 
     @Test
     public void equal_returns_true_for_constants_with_matching_values_and_false_otherwise() {
         String input = "(equal? 42 42)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#t"));
+        Assert.assertThat(visitParseTreeForInput(input), is("#t"));
         input = "(equal? #\\a #\\a)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#t"));
+        Assert.assertThat(visitParseTreeForInput(input), is("#t"));
         input = "(equal? \"a string\" \"a different string\")";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#f"));
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
         input = "(equal? #t #f)";
-        Assert.assertThat(visitParseTreeForInput(input), Matchers.is("#f"));
+        Assert.assertThat(visitParseTreeForInput(input), is("#f"));
     }
 
     private String visitParseTreeForInput(String input) {
