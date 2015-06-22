@@ -9,6 +9,7 @@ public abstract class PredefinedProcedures {
     public static final Map<String, Procedure> MATH_PROCEDURES = new HashMap<>();
     public static final Map<String, Procedure> LIST_PROCEDURES = new HashMap<>();
     public static final Map<String, Procedure> EQUALITY_PROCEDURES = new HashMap<>();
+    public static final Map<String, Procedure> CONDITIONALS = new HashMap<>();
 
     static {
         defineCar();
@@ -18,6 +19,42 @@ public abstract class PredefinedProcedures {
         defineMultiplication();
         defineQuotient();
         defineEquality();
+        defineIfStatement();
+    }
+
+    private static void defineIfStatement() {
+        CONDITIONALS.put("if", arguments -> {
+            checkExactArity(arguments.size(), 3);
+
+            boolean hasBooleanCondition = false;
+            boolean condition = true;
+
+            Datum firstArgument = arguments.get(0);
+            if (firstArgument instanceof Constant) {
+                Constant constant = (Constant) firstArgument;
+                if (constant.getValue() instanceof Boolean) {
+                    hasBooleanCondition = true;
+                    condition = (Boolean) constant.getValue();
+                }
+            }
+
+            /*
+                The value of the third argument (the else branch) is only
+                returned when the first argument evaluates to #f.
+
+                An except from R5RS standard (http://www.schemers.org/Documents/Standards/R5RS/,
+                section "6.3.1 Booleans"):
+
+                "Of all the standard Scheme values, only #f counts as false in conditional expressions.
+                 Except for #f, all standard Scheme values, including #t, pairs, the empty list, symbols,
+                 numbers, strings, vectors, and procedures, count as true."
+             */
+            if (!hasBooleanCondition || condition) {
+                return arguments.get(1);
+            } else {
+                return arguments.get(2);
+            }
+        });
     }
 
     private static void defineEquality() {

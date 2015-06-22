@@ -294,6 +294,16 @@ public class SchemeParseTreeVisitorTest {
         Assert.assertThat(visitParseTreeForInput(input), is("#f"));
     }
 
+    @Test
+    public void the_if_statement_is_evaluated_correctly() {
+        String input = "(if (equal? 42 42) \"equal\" \"not equal\")";
+        Assert.assertThat(visitParseTreeForInput(input), is("\"equal\""));
+        input = "(if (equal? 42 25) \"equal\" \"not equal\")";
+        Assert.assertThat(visitParseTreeForInput(input), is("\"not equal\""));
+        input = "(if (equal? 42 \"foo\") \"equal\" \"not equal\")";
+        Assert.assertThat(visitParseTreeForInput(input), is("\"not equal\""));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
