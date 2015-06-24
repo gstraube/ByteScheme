@@ -10,6 +10,7 @@ public abstract class PredefinedProcedures {
     public static final Map<String, Procedure> LIST_PROCEDURES = new HashMap<>();
     public static final Map<String, Procedure> EQUALITY_PROCEDURES = new HashMap<>();
     public static final Map<String, Procedure> CONDITIONALS = new HashMap<>();
+    public static final Map<String, Procedure> NUMBER_COMPARATORS = new HashMap<>();
 
     static {
         defineCar();
@@ -18,8 +19,44 @@ public abstract class PredefinedProcedures {
         defineSubtraction();
         defineMultiplication();
         defineQuotient();
+        defineNumberComparators();
         defineEquality();
         defineIfStatement();
+    }
+
+    private static void defineNumberComparators() {
+        NUMBER_COMPARATORS.put("<", arguments -> {
+            checkExactArity(arguments.size(), 2);
+            List<Integer> integers = castToIntArguments(arguments);
+            if (integers.get(0) < integers.get(1)) {
+                return new Constant<>(true, "#t");
+            }
+            return new Constant<>(false, "#f");
+        });
+        NUMBER_COMPARATORS.put("<=", arguments -> {
+            checkExactArity(arguments.size(), 2);
+            List<Integer> integers = castToIntArguments(arguments);
+            if (integers.get(0) <= integers.get(1)) {
+                return new Constant<>(true, "#t");
+            }
+            return new Constant<>(false, "#f");
+        });
+        NUMBER_COMPARATORS.put(">", arguments -> {
+            checkExactArity(arguments.size(), 2);
+            List<Integer> integers = castToIntArguments(arguments);
+            if (integers.get(0) > integers.get(1)) {
+                return new Constant<>(true, "#t");
+            }
+            return new Constant<>(false, "#f");
+        });
+        NUMBER_COMPARATORS.put(">=", arguments -> {
+            checkExactArity(arguments.size(), 2);
+            List<Integer> integers = castToIntArguments(arguments);
+            if (integers.get(0) >= integers.get(1)) {
+                return new Constant<>(true, "#t");
+            }
+            return new Constant<>(false, "#f");
+        });
     }
 
     private static void defineIfStatement() {

@@ -19,6 +19,7 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
         definedProcedures.putAll(PredefinedProcedures.LIST_PROCEDURES);
         definedProcedures.putAll(PredefinedProcedures.EQUALITY_PROCEDURES);
         definedProcedures.putAll(PredefinedProcedures.CONDITIONALS);
+        definedProcedures.putAll(PredefinedProcedures.NUMBER_COMPARATORS);
     }
 
     @Override

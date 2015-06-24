@@ -9,7 +9,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import parser.ErrorListener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.is;
 
@@ -302,6 +304,27 @@ public class SchemeParseTreeVisitorTest {
         Assert.assertThat(visitParseTreeForInput(input), is("\"not equal\""));
         input = "(if (equal? 42 \"foo\") \"equal\" \"not equal\")";
         Assert.assertThat(visitParseTreeForInput(input), is("\"not equal\""));
+    }
+
+    @Test
+    public void comparison_operators_are_evaluated_correctly() throws Exception {
+        Map<String, String> expectedResults = new HashMap() {{
+            put("(< 5 10)", "#t");
+            put("(< 10 5)", "#f");
+            put("(< 10 10)", "#f");
+            put("(> 10 5)", "#t");
+            put("(> 5 10)", "#f");
+            put("(> 10 10)", "#f");
+            put("(<= 5 10)", "#t");
+            put("(<= 10 5)", "#f");
+            put("(<= 10 10)", "#t");
+            put("(>= 10 5)", "#t");
+            put("(>= 5 10)", "#f");
+            put("(>= 10 10)", "#t");
+        }};
+        for (String input : expectedResults.keySet()) {
+            Assert.assertThat(visitParseTreeForInput(input), is(expectedResults.get(input)));
+        }
     }
 
     private String visitParseTreeForInput(String input) {
