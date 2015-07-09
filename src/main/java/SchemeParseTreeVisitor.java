@@ -13,6 +13,7 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
     public Map<String, Datum> variableDefinitions = new HashMap<>();
     private Map<String, Procedure> definedProcedures = new HashMap<>();
     private Map<String, Datum> localBindings = new HashMap<>();
+    private Map<String, SpecialForm> specialForms = new HashMap<>();
 
     public SchemeParseTreeVisitor() {
         definedProcedures.putAll(PredefinedProcedures.MATH_PROCEDURES);
@@ -20,6 +21,8 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
         definedProcedures.putAll(PredefinedProcedures.EQUALITY_PROCEDURES);
         definedProcedures.putAll(PredefinedProcedures.CONDITIONALS);
         definedProcedures.putAll(PredefinedProcedures.NUMBER_COMPARATORS);
+
+        specialForms.put("if", SpecialForm.IF);
     }
 
     @Override
@@ -135,16 +138,62 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
     private Datum evaluateApplication(SchemeParser.ApplicationContext application) {
         String procedureName = application.IDENTIFIER().getText();
 
-        if (!definedProcedures.containsKey(procedureName)) {
+        if (!definedProcedures.containsKey(procedureName) && !specialForms.containsKey(procedureName)) {
             throw new ParseCancellationException(String.format("Undefined procedure '%s'", procedureName));
         } else {
-            Procedure procedure = definedProcedures.get(procedureName);
-            List<Datum> arguments = application.expression()
-                    .stream()
-                    .map(this::evaluateExpression)
-                    .collect(Collectors.toList());
-            return procedure.apply(arguments);
+            if (specialForms.containsKey(procedureName)) {
+                SpecialForm specialForm = specialForms.get(procedureName);
+                switch (specialForm) {
+                    case IF:
+                        return evaluateIfConditional(application.expression());
+                    default:
+                        throw new ParseCancellationException("Could not find matching special form");
+                }
+
+            } else {
+                Procedure procedure = definedProcedures.get(procedureName);
+                List<Datum> arguments = application.expression()
+                        .stream()
+                        .map(this::evaluateExpression)
+                        .collect(Collectors.toList());
+                return procedure.apply(arguments);
+            }
         }
+    }
+
+    private Datum evaluateIfConditional(List<SchemeParser.ExpressionContext> expressions) {
+        Util.checkExactArity(expressions.size(), 3);
+
+        boolean hasBooleanCondition = false;
+        boolean condition = true;
+
+        Datum firstArgument = evaluateExpression(expressions.get(0));
+        if (firstArgument instanceof Constant) {
+            Constant constant = (Constant) firstArgument;
+            if (constant.getValue() instanceof Boolean) {
+                hasBooleanCondition = true;
+                condition = (Boolean) constant.getValue();
+            }
+        }
+
+            /*
+                The value of the third argument (the else branch) is only
+                returned when the first argument evaluates to #f.
+
+                An except from R5RS standard (http://www.schemers.org/Documents/Standards/R5RS/,
+                section "6.3.1 Booleans"):
+
+                "Of all the standard Scheme values, only #f counts as false in conditional expressions.
+                 Except for #f, all standard Scheme values, including #t, pairs, the empty list, symbols,
+                 numbers, strings, vectors, and procedures, count as true."
+             */
+        SchemeParser.ExpressionContext returnExpression;
+        if (!hasBooleanCondition || condition) {
+            returnExpression = expressions.get(1);
+        } else {
+            returnExpression = expressions.get(2);
+        }
+        return evaluateExpression(returnExpression);
     }
 
     private Datum applyQuotation(SchemeParser.QuotationContext quotation) {

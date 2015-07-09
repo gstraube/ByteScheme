@@ -21,12 +21,11 @@ public abstract class PredefinedProcedures {
         defineQuotient();
         defineNumberComparators();
         defineEquality();
-        defineIfStatement();
     }
 
     private static void defineNumberComparators() {
         NUMBER_COMPARATORS.put("<", arguments -> {
-            checkExactArity(arguments.size(), 2);
+            Util.checkExactArity(arguments.size(), 2);
             List<Integer> integers = castToIntArguments(arguments);
             if (integers.get(0) < integers.get(1)) {
                 return new Constant<>(true, "#t");
@@ -34,7 +33,7 @@ public abstract class PredefinedProcedures {
             return new Constant<>(false, "#f");
         });
         NUMBER_COMPARATORS.put("<=", arguments -> {
-            checkExactArity(arguments.size(), 2);
+            Util.checkExactArity(arguments.size(), 2);
             List<Integer> integers = castToIntArguments(arguments);
             if (integers.get(0) <= integers.get(1)) {
                 return new Constant<>(true, "#t");
@@ -42,7 +41,7 @@ public abstract class PredefinedProcedures {
             return new Constant<>(false, "#f");
         });
         NUMBER_COMPARATORS.put(">", arguments -> {
-            checkExactArity(arguments.size(), 2);
+            Util.checkExactArity(arguments.size(), 2);
             List<Integer> integers = castToIntArguments(arguments);
             if (integers.get(0) > integers.get(1)) {
                 return new Constant<>(true, "#t");
@@ -50,7 +49,7 @@ public abstract class PredefinedProcedures {
             return new Constant<>(false, "#f");
         });
         NUMBER_COMPARATORS.put(">=", arguments -> {
-            checkExactArity(arguments.size(), 2);
+            Util.checkExactArity(arguments.size(), 2);
             List<Integer> integers = castToIntArguments(arguments);
             if (integers.get(0) >= integers.get(1)) {
                 return new Constant<>(true, "#t");
@@ -59,46 +58,11 @@ public abstract class PredefinedProcedures {
         });
     }
 
-    private static void defineIfStatement() {
-        CONDITIONALS.put("if", arguments -> {
-            checkExactArity(arguments.size(), 3);
-
-            boolean hasBooleanCondition = false;
-            boolean condition = true;
-
-            Datum firstArgument = arguments.get(0);
-            if (firstArgument instanceof Constant) {
-                Constant constant = (Constant) firstArgument;
-                if (constant.getValue() instanceof Boolean) {
-                    hasBooleanCondition = true;
-                    condition = (Boolean) constant.getValue();
-                }
-            }
-
-            /*
-                The value of the third argument (the else branch) is only
-                returned when the first argument evaluates to #f.
-
-                An except from R5RS standard (http://www.schemers.org/Documents/Standards/R5RS/,
-                section "6.3.1 Booleans"):
-
-                "Of all the standard Scheme values, only #f counts as false in conditional expressions.
-                 Except for #f, all standard Scheme values, including #t, pairs, the empty list, symbols,
-                 numbers, strings, vectors, and procedures, count as true."
-             */
-            if (!hasBooleanCondition || condition) {
-                return arguments.get(1);
-            } else {
-                return arguments.get(2);
-            }
-        });
-    }
-
     private static void defineEquality() {
         EQUALITY_PROCEDURES.put("equal?", new Procedure() {
             @Override
             public Datum apply(List<Datum> arguments) {
-                checkExactArity(arguments.size(), 2);
+                Util.checkExactArity(arguments.size(), 2);
 
                 Datum firstArgument = arguments.get(0);
                 Datum secondArgument = arguments.get(1);
@@ -143,7 +107,7 @@ public abstract class PredefinedProcedures {
 
     private static void defineCar() {
         LIST_PROCEDURES.put("car", arguments -> {
-            checkExactArity(arguments.size(), 1);
+            Util.checkExactArity(arguments.size(), 1);
             SList list = castToList(arguments);
             if (list.length() == 0) {
                 throw new ParseCancellationException("Wrong argument type: Expected pair");
@@ -154,7 +118,7 @@ public abstract class PredefinedProcedures {
 
     private static void defineCdr() {
         LIST_PROCEDURES.put("cdr", arguments -> {
-            checkExactArity(arguments.size(), 1);
+            Util.checkExactArity(arguments.size(), 1);
             SList list = castToList(arguments);
             if (list.length() == 0) {
                 throw new ParseCancellationException("Wrong argument type: Expected pair");
@@ -173,7 +137,7 @@ public abstract class PredefinedProcedures {
 
     private static void defineQuotient() {
         MATH_PROCEDURES.put("quotient", arguments -> {
-            checkExactArity(arguments.size(), 2);
+            Util.checkExactArity(arguments.size(), 2);
             List<Integer> intArguments = castToIntArguments(arguments);
             int dividend = intArguments.get(0);
             int divisor = intArguments.get(1);
