@@ -327,6 +327,13 @@ public class SchemeParseTreeVisitorTest {
         }
     }
 
+    @Test
+    public void it_is_possible_to_define_recursive_procedures() throws Exception {
+        String input = "(define (fib n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2)))))";
+        input += "(fib 10)";
+        Assert.assertThat(visitParseTreeForInput(input), is("55"));
+    }
+
     private String visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
