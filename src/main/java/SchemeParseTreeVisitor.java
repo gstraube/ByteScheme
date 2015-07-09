@@ -90,14 +90,19 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
             }
 
             int i = 0;
+            Map<String, Datum> currentValues = new HashMap<>();
             for (SchemeParser.ParamContext parameter : parameters) {
-                localBindings.put(parameter.getText(), arguments.get(i));
+                String parameterName = parameter.getText();
+                if (localBindings.containsKey(parameterName)) {
+                    currentValues.put(parameterName, localBindings.get(parameterName));
+                }
+                localBindings.put(parameterName, arguments.get(i));
                 i++;
             }
 
             Datum value = evaluateApplication(lastExpression.application());
 
-            localBindings.clear();
+            localBindings.putAll(currentValues);
 
             return value;
         };
