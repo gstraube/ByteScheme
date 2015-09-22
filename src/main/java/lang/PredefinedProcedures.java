@@ -64,6 +64,15 @@ public abstract class PredefinedProcedures {
             }
             return new Constant<>(false, "#f");
         });
+        NUMBER_COMPARATORS.put("=", arguments -> {
+            Util.checkExactArity(arguments.size(), 2);
+            List<BigInteger> integers = castToIntArguments(arguments);
+            int comparison = integers.get(0).compareTo(integers.get(1));
+            if (comparison == 0) {
+                return new Constant<>(true, "#t");
+            }
+            return new Constant<>(false, "#f");
+        });
     }
 
     private static void defineEquality() {
