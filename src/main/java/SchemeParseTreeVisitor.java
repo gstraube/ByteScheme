@@ -4,7 +4,6 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
 
@@ -82,29 +81,32 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
     }
 
     private void defineProcedure(String procedureName, SchemeParser.ExpressionContext lastExpression, List<SchemeParser.ParamContext> parameters) {
-        Procedure procedure = arguments -> {
-            if (parameters.size() != arguments.size()) {
-                throw new ParseCancellationException(
-                        String.format("Expected %d argument(s) but got %d argument(s)",
-                                parameters.size(), arguments.size()));
-            }
-
-            int i = 0;
-            Map<String, Datum> currentValues = new HashMap<>();
-            for (SchemeParser.ParamContext parameter : parameters) {
-                String parameterName = parameter.getText();
-                if (localBindings.containsKey(parameterName)) {
-                    currentValues.put(parameterName, localBindings.get(parameterName));
+        Procedure procedure = new Procedure() {
+            @Override
+            public Datum apply(List<Datum> arguments) {
+                if (parameters.size() != arguments.size()) {
+                    throw new ParseCancellationException(
+                            String.format("Expected %d argument(s) but got %d argument(s)",
+                                    parameters.size(), arguments.size()));
                 }
-                localBindings.put(parameterName, arguments.get(i));
-                i++;
+
+                int i = 0;
+                Map<String, Datum> currentValues = new HashMap<>();
+                for (SchemeParser.ParamContext parameter : parameters) {
+                    String parameterName = parameter.getText();
+                    if (localBindings.containsKey(parameterName)) {
+                        currentValues.put(parameterName, localBindings.get(parameterName));
+                    }
+                    localBindings.put(parameterName, arguments.get(i));
+                    i++;
+                }
+
+                Datum value = SchemeParseTreeVisitor.this.evaluateApplication(lastExpression.application());
+
+                localBindings.putAll(currentValues);
+
+                return value;
             }
-
-            Datum value = evaluateApplication(lastExpression.application());
-
-            localBindings.putAll(currentValues);
-
-            return value;
         };
         definedProcedures.put(procedureName, procedure);
     }
@@ -157,10 +159,11 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
 
             } else {
                 Procedure procedure = definedProcedures.get(procedureName);
-                List<Datum> arguments = application.expression()
-                        .stream()
-                        .map(this::evaluateExpression)
-                        .collect(Collectors.toList());
+                List<Datum> arguments = new ArrayList<>();
+                for (SchemeParser.ExpressionContext expression : application.expression()) {
+                    arguments.add(evaluateExpression(expression));
+                }
+
                 return procedure.apply(arguments);
             }
         }

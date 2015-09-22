@@ -24,13 +24,16 @@ public abstract class PredefinedProcedures {
     }
 
     private static void defineNumberComparators() {
-        NUMBER_COMPARATORS.put("<", arguments -> {
-            Util.checkExactArity(arguments.size(), 2);
-            List<Integer> integers = castToIntArguments(arguments);
-            if (integers.get(0) < integers.get(1)) {
-                return new Constant<>(true, "#t");
+        NUMBER_COMPARATORS.put("<", new Procedure() {
+            @Override
+            public Datum apply(List<Datum> arguments) {
+                Util.checkExactArity(arguments.size(), 2);
+                List<Integer> integers = castToIntArguments(arguments);
+                if (integers.get(0) < integers.get(1)) {
+                    return new Constant<>(true, "#t");
+                }
+                return new Constant<>(false, "#f");
             }
-            return new Constant<>(false, "#f");
         });
         NUMBER_COMPARATORS.put("<=", arguments -> {
             Util.checkExactArity(arguments.size(), 2);
