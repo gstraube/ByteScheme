@@ -2,6 +2,7 @@ package lang;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
+import java.math.BigInteger;
 import java.util.*;
 
 public abstract class PredefinedProcedures {
@@ -28,8 +29,9 @@ public abstract class PredefinedProcedures {
             @Override
             public Datum apply(List<Datum> arguments) {
                 Util.checkExactArity(arguments.size(), 2);
-                List<Integer> integers = castToIntArguments(arguments);
-                if (integers.get(0) < integers.get(1)) {
+                List<BigInteger> integers = castToIntArguments(arguments);
+                int comparison = integers.get(0).compareTo(integers.get(1));
+                if (comparison == -1) {
                     return new Constant<>(true, "#t");
                 }
                 return new Constant<>(false, "#f");
@@ -37,24 +39,27 @@ public abstract class PredefinedProcedures {
         });
         NUMBER_COMPARATORS.put("<=", arguments -> {
             Util.checkExactArity(arguments.size(), 2);
-            List<Integer> integers = castToIntArguments(arguments);
-            if (integers.get(0) <= integers.get(1)) {
+            List<BigInteger> integers = castToIntArguments(arguments);
+            int comparison = integers.get(0).compareTo(integers.get(1));
+            if (comparison == -1 || comparison == 0) {
                 return new Constant<>(true, "#t");
             }
             return new Constant<>(false, "#f");
         });
         NUMBER_COMPARATORS.put(">", arguments -> {
             Util.checkExactArity(arguments.size(), 2);
-            List<Integer> integers = castToIntArguments(arguments);
-            if (integers.get(0) > integers.get(1)) {
+            List<BigInteger> integers = castToIntArguments(arguments);
+            int comparison = integers.get(0).compareTo(integers.get(1));
+            if (comparison == 1) {
                 return new Constant<>(true, "#t");
             }
             return new Constant<>(false, "#f");
         });
         NUMBER_COMPARATORS.put(">=", arguments -> {
             Util.checkExactArity(arguments.size(), 2);
-            List<Integer> integers = castToIntArguments(arguments);
-            if (integers.get(0) >= integers.get(1)) {
+            List<BigInteger> integers = castToIntArguments(arguments);
+            int comparison = integers.get(0).compareTo(integers.get(1));
+            if (comparison == 0 || comparison == 1) {
                 return new Constant<>(true, "#t");
             }
             return new Constant<>(false, "#f");
@@ -141,10 +146,10 @@ public abstract class PredefinedProcedures {
     private static void defineQuotient() {
         MATH_PROCEDURES.put("quotient", arguments -> {
             Util.checkExactArity(arguments.size(), 2);
-            List<Integer> intArguments = castToIntArguments(arguments);
-            int dividend = intArguments.get(0);
-            int divisor = intArguments.get(1);
-            int result = dividend / divisor;
+            List<BigInteger> intArguments = castToIntArguments(arguments);
+            BigInteger dividend = intArguments.get(0);
+            BigInteger divisor = intArguments.get(1);
+            BigInteger result = dividend.divide(divisor);
 
             return new Constant<>(result, String.valueOf(result));
         });
@@ -153,8 +158,8 @@ public abstract class PredefinedProcedures {
     private static void defineMultiplication() {
         MATH_PROCEDURES.put("*", arguments -> {
             checkMinimalArity(arguments.size(), 1);
-            List<Integer> intArguments = castToIntArguments(arguments);
-            int product = intArguments.stream().reduce(1, (a, b) -> a * b);
+            List<BigInteger> intArguments = castToIntArguments(arguments);
+            BigInteger product = intArguments.stream().reduce(BigInteger.ONE, BigInteger::multiply);
             return new Constant<>(product, String.valueOf(product));
         });
     }
@@ -162,15 +167,15 @@ public abstract class PredefinedProcedures {
     private static void defineSubtraction() {
         MATH_PROCEDURES.put("-", arguments -> {
             checkMinimalArity(arguments.size(), 1);
-            List<Integer> intArguments = castToIntArguments(arguments);
-            Integer firstArgument = intArguments.stream().findFirst().get();
-            List<Integer> tailArguments = intArguments.subList(1, intArguments.size());
-            int result;
+            List<BigInteger> intArguments = castToIntArguments(arguments);
+            BigInteger firstArgument = intArguments.stream().findFirst().get();
+            List<BigInteger> tailArguments = intArguments.subList(1, intArguments.size());
+            BigInteger result;
 
             if (tailArguments.isEmpty()) {
-                result = -firstArgument;
+                result = firstArgument.negate();
             } else {
-                result = tailArguments.stream().reduce(firstArgument, (a, b) -> a - b);
+                result = tailArguments.stream().reduce(firstArgument, BigInteger::subtract);
             }
 
             return new Constant<>(result, String.valueOf(result));
@@ -180,8 +185,8 @@ public abstract class PredefinedProcedures {
     private static void defineAddition() {
         MATH_PROCEDURES.put("+", arguments -> {
             checkMinimalArity(arguments.size(), 1);
-            List<Integer> intArguments = castToIntArguments(arguments);
-            int sum = intArguments.stream().reduce(0, (a, b) -> a + b);
+            List<BigInteger> intArguments = castToIntArguments(arguments);
+            BigInteger sum = intArguments.stream().reduce(BigInteger.ZERO, BigInteger::add);
             return new Constant<>(sum, String.valueOf(sum));
         });
     }
@@ -200,10 +205,10 @@ public abstract class PredefinedProcedures {
         }
     }
 
-    private static List<Integer> castToIntArguments(List<Datum> arguments) {
-        List<Integer> intArguments = new ArrayList<>();
+    private static List<BigInteger> castToIntArguments(List<Datum> arguments) {
+        List<BigInteger> intArguments = new ArrayList<>();
         for (Datum datum : arguments) {
-            Constant<Integer> integerConstant = (Constant<Integer>) datum;
+            Constant<BigInteger> integerConstant = (Constant<BigInteger>) datum;
             intArguments.add(integerConstant.getValue());
         }
         return intArguments;

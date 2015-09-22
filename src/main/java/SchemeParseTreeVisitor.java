@@ -3,6 +3,7 @@ import lang.Vector;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.math.BigInteger;
 import java.util.*;
 
 public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
@@ -265,7 +266,7 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
     private Constant extractConstant(SchemeParser.ConstantContext constant) {
         if (constant.NUMBER() != null) {
             String text = constant.NUMBER().getText();
-            int value = Integer.valueOf(text);
+            BigInteger value = new BigInteger(text);
             return new Constant<>(value, text);
         }
         if (constant.CHARACTER() != null) {
