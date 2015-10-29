@@ -8,9 +8,29 @@ public class CodeGenVisitor extends SchemeBaseVisitor<List<String>> {
     public List<String> visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
         String identifier = variableDefinition.IDENTIFIER().getText();
 
-        String text = variableDefinition.expression().constant().NUMBER().getText();
+        String text;
+        String generatedCode = "";
+        SchemeParser.ConstantContext constant = variableDefinition.expression().constant();
 
-        String generatedCode = String.format("BigInteger %s = new BigInteger(%s)", identifier, text);
+        if (constant.NUMBER() != null) {
+            text = constant.NUMBER().getText();
+            generatedCode = String.format("BigInteger %s = new BigInteger(%s);", identifier, text);
+        }
+        if (constant.CHARACTER() != null) {
+            text = constant.CHARACTER().getText();
+            char containedChar = text.charAt(2);
+            generatedCode = String.format("char %s = '%c';", identifier, containedChar);
+        }
+        if (constant.STRING() != null) {
+            text = constant.STRING().getText();
+            generatedCode = String.format("String %s = %s;", identifier, text);
+        }
+        if (constant.BOOLEAN() != null) {
+            text = constant.BOOLEAN().getText();
+            boolean value = "#t".equals(text);
+            generatedCode = String.format("boolean %s = %s;", identifier, value);
+        }
+
         return Collections.singletonList(generatedCode);
     }
 

@@ -14,8 +14,12 @@ public class CodeGenVisitorTest {
     CodeGenVisitor codeGenVisitor;
 
     @Test
-    public void variable_definitions_are_processed_correctly() {
-        Assert.assertThat(visitParseTreeForInput("(define var1 51)"), is("BigInteger var1 = new BigInteger(51)"));
+    public void variable_definitions_with_constants_are_processed_correctly() {
+        Assert.assertThat(visitParseTreeForInput("(define var1 51)"), is("BigInteger var1 = new BigInteger(51);"));
+        Assert.assertThat(visitParseTreeForInput("(define var2 \"a string\")"), is("String var2 = \"a string\";"));
+        Assert.assertThat(visitParseTreeForInput("(define var3 #\\λ)"), is("char var3 = 'λ';"));
+        Assert.assertThat(visitParseTreeForInput("(define var4 #t)"), is("boolean var4 = true;"));
+        Assert.assertThat(visitParseTreeForInput("(define var5 #f)"), is("boolean var5 = false;"));
     }
 
     private String visitParseTreeForInput(String input) {
