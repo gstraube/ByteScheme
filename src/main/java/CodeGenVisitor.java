@@ -33,25 +33,41 @@ public class CodeGenVisitor extends SchemeBaseVisitor<List<String>> {
     @Override
     public List<String> visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
         String identifier = variableDefinition.IDENTIFIER().getText();
-
-        String text = visitConstant(variableDefinition.expression().constant()).get(0);
-        String generatedCode = "";
         SchemeParser.ConstantContext constant = variableDefinition.expression().constant();
 
+        return Collections.singletonList(createVariableDefinitionForConstant(identifier, constant));
+    }
+
+    @Override
+    public List<String> visitList(SchemeParser.ListContext list) {
+        String sListClass = "class SList{";
+        int elementCounter = 0;
+        for (SchemeParser.DatumContext datum : list.datum()) {
+            sListClass += createVariableDefinitionForConstant("e" + elementCounter, datum.constant());
+            elementCounter++;
+        }
+        sListClass += "}";
+
+        return Collections.singletonList(sListClass);
+    }
+
+    private String createVariableDefinitionForConstant(String identifier, SchemeParser.ConstantContext constant) {
+        String text = visitConstant(constant).get(0);
+
         if (constant.NUMBER() != null) {
-            generatedCode = String.format(INTEGER_CONSTANT_VAR_DEFINITION, identifier, text);
+            return String.format(INTEGER_CONSTANT_VAR_DEFINITION, identifier, text);
         }
         if (constant.CHARACTER() != null) {
-            generatedCode = String.format(CHAR_CONSTANT_VAR_DEFINITION, identifier, text);
+            return String.format(CHAR_CONSTANT_VAR_DEFINITION, identifier, text);
         }
         if (constant.STRING() != null) {
-            generatedCode = String.format(STRING_CONSTANT_VAR_DEFINITION, identifier, text);
+            return String.format(STRING_CONSTANT_VAR_DEFINITION, identifier, text);
         }
         if (constant.BOOLEAN() != null) {
-            generatedCode = String.format(BOOLEAN_CONSTANT_VAR_DEFINITION, identifier, text);
+            return String.format(BOOLEAN_CONSTANT_VAR_DEFINITION, identifier, text);
         }
 
-        return Collections.singletonList(generatedCode);
+        return "";
     }
 
     @Override

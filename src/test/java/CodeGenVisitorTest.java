@@ -23,6 +23,21 @@ public class CodeGenVisitorTest {
     }
 
     @Test
+    public void quoting_a_flat_list_with_constants_yields_a_class_in_the_generated_code() {
+        String input = "'(1 #t \"a string\" #\\d \"another string\" 4343323232324)";
+
+        String expectedOutput = "class SList{";
+        expectedOutput += "BigInteger e0 = new BigInteger(1);";
+        expectedOutput += "boolean e1 = true;";
+        expectedOutput += "String e2 = \"a string\";";
+        expectedOutput += "char e3 = 'd';";
+        expectedOutput += "String e4 = \"another string\";";
+        expectedOutput += "BigInteger e5 = new BigInteger(4343323232324);}";
+
+        Assert.assertThat(visitParseTreeForInput(input), is(expectedOutput));
+    }
+
+    @Test
     public void variable_definitions_with_constants_are_processed_correctly() {
         Assert.assertThat(visitParseTreeForInput("(define var1 51)"), is("BigInteger var1 = new BigInteger(51);"));
         Assert.assertThat(visitParseTreeForInput("(define var2 \"a string\")"), is("String var2 = \"a string\";"));
