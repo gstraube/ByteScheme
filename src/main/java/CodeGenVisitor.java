@@ -10,6 +10,27 @@ public class CodeGenVisitor extends SchemeBaseVisitor<List<String>> {
     private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "boolean %s = %s;";
 
     @Override
+    public List<String> visitConstant(SchemeParser.ConstantContext constant) {
+        String generatedCode = "";
+
+        if (constant.NUMBER() != null) {
+            generatedCode = String.format("new BigInteger(%s)", constant.NUMBER().getText());
+        }
+        if (constant.CHARACTER() != null) {
+            char containedChar = constant.CHARACTER().getText().charAt(2);
+            generatedCode = String.format("'%c'", containedChar);
+        }
+        if (constant.STRING() != null) {
+            generatedCode = constant.STRING().getText();
+        }
+        if (constant.BOOLEAN() != null) {
+            generatedCode = String.valueOf("#t".equals(constant.BOOLEAN().getText()));
+        }
+
+        return Collections.singletonList(generatedCode);
+    }
+
+    @Override
     public List<String> visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
         String identifier = variableDefinition.IDENTIFIER().getText();
 

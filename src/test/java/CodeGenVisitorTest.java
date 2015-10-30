@@ -14,6 +14,15 @@ public class CodeGenVisitorTest {
     CodeGenVisitor codeGenVisitor;
 
     @Test
+    public void constants_are_processed_correctly() {
+        Assert.assertThat(visitParseTreeForInput("20414342334"), is("new BigInteger(20414342334)"));
+        Assert.assertThat(visitParseTreeForInput("\"a string\""), is("\"a string\""));
+        Assert.assertThat(visitParseTreeForInput("#\\λ"), is("'λ'"));
+        Assert.assertThat(visitParseTreeForInput("#t"), is("true"));
+        Assert.assertThat(visitParseTreeForInput("#f"), is("false"));
+    }
+
+    @Test
     public void variable_definitions_with_constants_are_processed_correctly() {
         Assert.assertThat(visitParseTreeForInput("(define var1 51)"), is("BigInteger var1 = new BigInteger(51);"));
         Assert.assertThat(visitParseTreeForInput("(define var2 \"a string\")"), is("String var2 = \"a string\";"));
