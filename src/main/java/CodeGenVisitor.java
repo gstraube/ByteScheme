@@ -14,7 +14,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<List<String>> {
         String generatedCode = "";
 
         if (constant.NUMBER() != null) {
-            generatedCode = String.format("new BigInteger(%s)", constant.NUMBER().getText());
+            generatedCode = String.format("new BigInteger(\"%s\")", constant.NUMBER().getText());
         }
         if (constant.CHARACTER() != null) {
             char containedChar = constant.CHARACTER().getText().charAt(2);
