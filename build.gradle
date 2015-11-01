@@ -19,6 +19,7 @@ repositories {
 
 dependencies {
   compile('org.antlr:antlr4-runtime:4.5')
+  compile('org.javassist:javassist:3.20.0-GA')
 }
 
 task wrapper(type: Wrapper) {
