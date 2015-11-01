@@ -4,7 +4,7 @@ import java.util.List;
 
 public class CodeGenVisitor extends SchemeBaseVisitor<List<String>> {
 
-    private static final String INTEGER_CONSTANT_VAR_DEFINITION = "BigInteger %s = %s;";
+    private static final String INTEGER_CONSTANT_VAR_DEFINITION = "java.math.BigInteger %s = %s;";
     private static final String CHAR_CONSTANT_VAR_DEFINITION = "char %s = %s;";
     private static final String STRING_CONSTANT_VAR_DEFINITION = "String %s = %s;";
     private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "boolean %s = %s;";
@@ -14,7 +14,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<List<String>> {
         String generatedCode = "";
 
         if (constant.NUMBER() != null) {
-            generatedCode = String.format("new BigInteger(\"%s\")", constant.NUMBER().getText());
+            generatedCode = String.format("new java.math.BigInteger(\"%s\")", constant.NUMBER().getText());
         }
         if (constant.CHARACTER() != null) {
             char containedChar = constant.CHARACTER().getText().charAt(2);
