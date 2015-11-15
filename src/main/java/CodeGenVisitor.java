@@ -1,3 +1,5 @@
+import org.antlr.v4.runtime.misc.ParseCancellationException;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
@@ -38,7 +40,26 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
             generatedCode.addConstant(String.format("new java.math.BigInteger(\"%s\")", constant.NUMBER().getText()));
         }
         if (constant.CHARACTER() != null) {
-            char containedChar = constant.CHARACTER().getText().charAt(2);
+            char containedChar;
+
+            String characterText = constant.CHARACTER().getText().substring(2);
+            if (characterText.length() > 1) {
+                switch (characterText) {
+                    case "newline":
+                        containedChar = '\n';
+                        break;
+                    case "space":
+                        containedChar = ' ';
+                        break;
+                    default:
+                        throw new ParseCancellationException(
+                                String.format("Could not evaluate character literal '%s'",
+                                        constant.CHARACTER().getText()));
+                }
+            } else {
+                containedChar = constant.CHARACTER().getText().charAt(2);
+            }
+
             generatedCode.addConstant(String.format("'%c'", containedChar));
         }
         if (constant.STRING() != null) {
