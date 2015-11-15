@@ -14,40 +14,50 @@ public class CodeGenVisitorTest {
     CodeGenVisitor codeGenVisitor;
 
     @Test
-    public void constants_are_processed_correctly() {
-        assertThat(visitParseTreeForInput("20414342334"), is("new java.math.BigInteger(\"20414342334\")"));
-        assertThat(visitParseTreeForInput("\"a string\""), is("\"a string\""));
-        assertThat(visitParseTreeForInput("#\\λ"), is("'λ'"));
-        assertThat(visitParseTreeForInput("#t"), is("true"));
-        assertThat(visitParseTreeForInput("#f"), is("false"));
-    }
+    public void top_level_constant_expressions_are_processed_correctly() {
+        String input = "20414342334 \"a string\" #\\λ #t #f";
+        GeneratedCode generatedCode = visitParseTreeForInput(input);
 
-    @Test
-    public void quoting_a_flat_list_with_constants_yields_a_class_in_the_generated_code() {
-        String input = "'(1 #t \"a string\" #\\d \"another string\" 4343323232324)";
+        assertThat(generatedCode.getMethodsToBeCalled().size(), is(5));
+        assertThat(generatedCode.getMethodsToBeDeclared().size(), is(5));
 
-        String expectedOutput = "class SList{";
-        expectedOutput += "java.math.BigInteger e0 = new java.math.BigInteger(\"1\");";
-        expectedOutput += "boolean e1 = true;";
-        expectedOutput += "String e2 = \"a string\";";
-        expectedOutput += "char e3 = 'd';";
-        expectedOutput += "String e4 = \"another string\";";
-        expectedOutput += "java.math.BigInteger e5 = new java.math.BigInteger(\"4343323232324\");}";
+        String expectedOutput = "printConstant%d";
+        for (int i = 0; i < 5; i++) {
+            assertThat(generatedCode.getMethodsToBeCalled().get(i), is(String.format(expectedOutput, i)));
+        }
 
-        assertThat(visitParseTreeForInput(input), is(expectedOutput));
+        expectedOutput = "public String printConstant%d(){return String.valueOf(%s);}";
+        assertThat(generatedCode.getMethodsToBeDeclared().get(0), is(String.format(expectedOutput,
+                0, "new java.math.BigInteger(\"20414342334\")")));
+        assertThat(generatedCode.getMethodsToBeDeclared().get(1), is(String.format(expectedOutput,
+                1, "\"a string\"")));
+        assertThat(generatedCode.getMethodsToBeDeclared().get(2), is(String.format(expectedOutput,
+                2, "'λ'")));
+        assertThat(generatedCode.getMethodsToBeDeclared().get(3), is(String.format(expectedOutput,
+                3, "true")));
+        assertThat(generatedCode.getMethodsToBeDeclared().get(4), is(String.format(expectedOutput,
+                4, "false")));
     }
 
     @Test
     public void variable_definitions_with_constants_are_processed_correctly() {
-        assertThat(visitParseTreeForInput("(define var1 51)"),
+        String input = "(define var1 51) (define var2 \"a string\")" +
+                "(define var3 #\\λ) (define var4 #t) (define var5 #f)";
+
+        GeneratedCode generatedCode = visitParseTreeForInput(input);
+
+        List<String> variableDefinitions = generatedCode.getVariableDefinitions();
+        assertThat(variableDefinitions.size(), is(5));
+
+        assertThat(variableDefinitions.get(0),
                 is("java.math.BigInteger var1 = new java.math.BigInteger(\"51\");"));
-        assertThat(visitParseTreeForInput("(define var2 \"a string\")"), is("String var2 = \"a string\";"));
-        assertThat(visitParseTreeForInput("(define var3 #\\λ)"), is("char var3 = 'λ';"));
-        assertThat(visitParseTreeForInput("(define var4 #t)"), is("boolean var4 = true;"));
-        assertThat(visitParseTreeForInput("(define var5 #f)"), is("boolean var5 = false;"));
+        assertThat(variableDefinitions.get(1), is("String var2 = \"a string\";"));
+        assertThat(variableDefinitions.get(2), is("char var3 = 'λ';"));
+        assertThat(variableDefinitions.get(3), is("boolean var4 = true;"));
+        assertThat(variableDefinitions.get(4), is("boolean var5 = false;"));
     }
 
-    private String visitParseTreeForInput(String input) {
+    private GeneratedCode visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
         lexer.removeErrorListeners();
@@ -60,9 +70,7 @@ public class CodeGenVisitorTest {
 
         ParseTree parseTree = parser.program();
         codeGenVisitor = new CodeGenVisitor();
-        List<String> output = codeGenVisitor.visit(parseTree);
-
-        return String.join(" ", output);
+        return codeGenVisitor.visit(parseTree);
     }
 
 }

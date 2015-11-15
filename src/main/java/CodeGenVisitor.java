@@ -1,96 +1,94 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class CodeGenVisitor extends SchemeBaseVisitor<List<String>> {
+public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
 
     private static final String INTEGER_CONSTANT_VAR_DEFINITION = "java.math.BigInteger %s = %s;";
     private static final String CHAR_CONSTANT_VAR_DEFINITION = "char %s = %s;";
     private static final String STRING_CONSTANT_VAR_DEFINITION = "String %s = %s;";
     private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "boolean %s = %s;";
 
+    AtomicInteger constantsCounter = new AtomicInteger(0);
+
     @Override
-    public List<String> visitForm(SchemeParser.FormContext form) {
-        List<String> output = new ArrayList<>();
+    public GeneratedCode visitForm(SchemeParser.FormContext form) {
+        GeneratedCode generatedCode = GeneratedCode.empty();
 
-        SchemeParser.ExpressionContext expression = form.expression();
-        String constantCode = visitConstant(expression.constant()).get(0);
 
-        output.add(String.format("public String printConstant(){return String.valueOf(%s);}", constantCode));
+        if (form.expression() != null) {
+            SchemeParser.ExpressionContext expression = form.expression();
+            String constantCode = visitConstant(expression.constant()).getConstant(0);
 
-        return output;
+            int constantIndex = constantsCounter.getAndIncrement();
+            generatedCode.addMethodToBeDeclared(String.format("public String printConstant%d(){return String.valueOf(%s);}",
+                    constantIndex, constantCode));
+            generatedCode.addMethodToBeCalled("printConstant" + constantIndex);
+        }
+        if (form.definition() != null) {
+            return visitVariable_definition(form.definition().variable_definition());
+        }
+
+        return generatedCode;
     }
 
     @Override
-    public List<String> visitConstant(SchemeParser.ConstantContext constant) {
-        String generatedCode = "";
+    public GeneratedCode visitConstant(SchemeParser.ConstantContext constant) {
+        GeneratedCode generatedCode = GeneratedCode.empty();
 
         if (constant.NUMBER() != null) {
-            generatedCode = String.format("new java.math.BigInteger(\"%s\")", constant.NUMBER().getText());
+            generatedCode.addConstant(String.format("new java.math.BigInteger(\"%s\")", constant.NUMBER().getText()));
         }
         if (constant.CHARACTER() != null) {
             char containedChar = constant.CHARACTER().getText().charAt(2);
-            generatedCode = String.format("'%c'", containedChar);
+            generatedCode.addConstant(String.format("'%c'", containedChar));
         }
         if (constant.STRING() != null) {
-            generatedCode = constant.STRING().getText();
+            generatedCode.addConstant(constant.STRING().getText());
         }
         if (constant.BOOLEAN() != null) {
-            generatedCode = String.valueOf("#t".equals(constant.BOOLEAN().getText()));
+            generatedCode.addConstant(String.valueOf("#t".equals(constant.BOOLEAN().getText())));
         }
 
-        return Collections.singletonList(generatedCode);
+        return generatedCode;
     }
 
+
     @Override
-    public List<String> visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
+    public GeneratedCode visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
         String identifier = variableDefinition.IDENTIFIER().getText();
         SchemeParser.ConstantContext constant = variableDefinition.expression().constant();
 
-        return Collections.singletonList(createVariableDefinitionForConstant(identifier, constant));
+        return createVariableDefinitionForConstant(identifier, constant);
     }
 
-    @Override
-    public List<String> visitList(SchemeParser.ListContext list) {
-        String sListClass = "class SList{";
-        int elementCounter = 0;
-        for (SchemeParser.DatumContext datum : list.datum()) {
-            sListClass += createVariableDefinitionForConstant("e" + elementCounter, datum.constant());
-            elementCounter++;
-        }
-        sListClass += "}";
-
-        return Collections.singletonList(sListClass);
-    }
-
-    private String createVariableDefinitionForConstant(String identifier, SchemeParser.ConstantContext constant) {
-        String text = visitConstant(constant).get(0);
+    private GeneratedCode createVariableDefinitionForConstant(String identifier,
+                                                              SchemeParser.ConstantContext constant) {
+        GeneratedCode generatedCode = GeneratedCode.empty();
+        String text = visitConstant(constant).getConstant(0);
 
         if (constant.NUMBER() != null) {
-            return String.format(INTEGER_CONSTANT_VAR_DEFINITION, identifier, text);
+            generatedCode.addVariableDefinition(String.format(INTEGER_CONSTANT_VAR_DEFINITION, identifier, text));
         }
         if (constant.CHARACTER() != null) {
-            return String.format(CHAR_CONSTANT_VAR_DEFINITION, identifier, text);
+            generatedCode.addVariableDefinition(String.format(CHAR_CONSTANT_VAR_DEFINITION, identifier, text));
         }
         if (constant.STRING() != null) {
-            return String.format(STRING_CONSTANT_VAR_DEFINITION, identifier, text);
+            generatedCode.addVariableDefinition(String.format(STRING_CONSTANT_VAR_DEFINITION, identifier, text));
         }
         if (constant.BOOLEAN() != null) {
-            return String.format(BOOLEAN_CONSTANT_VAR_DEFINITION, identifier, text);
+            generatedCode.addVariableDefinition(String.format(BOOLEAN_CONSTANT_VAR_DEFINITION, identifier, text));
         }
 
-        return "";
+        return generatedCode;
     }
 
     @Override
-    protected List<String> defaultResult() {
-        return new ArrayList<>();
+    protected GeneratedCode defaultResult() {
+        return GeneratedCode.empty();
     }
 
     @Override
-    protected List<String> aggregateResult(List<String> aggregate, List<String> nextResult) {
-        aggregate.addAll(nextResult);
-        return aggregate;
+    protected GeneratedCode aggregateResult(GeneratedCode aggregate, GeneratedCode nextResult) {
+        return aggregate.mergeWith(nextResult);
     }
 
 }
