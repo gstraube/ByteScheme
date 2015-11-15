@@ -1,11 +1,11 @@
 import javassist.*;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public class OnTheFlyCompilerTest {
 
@@ -23,11 +23,11 @@ public class OnTheFlyCompilerTest {
         Class<?> aClass = aClassCt.toClass();
         Object anObjectOfAClass = aClass.newInstance();
 
-        Assert.assertThat(aClass.getField("aString").get(anObjectOfAClass), is("stringValue"));
-        Assert.assertThat(aClass.getField("anInteger").get(anObjectOfAClass), is(434343));
-        Assert.assertThat(aClass.getField("aBigInteger").get(anObjectOfAClass), is(new BigInteger("5844")));
-        Assert.assertThat(aClass.getField("aChar").get(anObjectOfAClass), is('l'));
-        Assert.assertThat(aClass.getField("aBoolean").get(anObjectOfAClass), is(true));
+        assertThat(aClass.getField("aString").get(anObjectOfAClass), is("stringValue"));
+        assertThat(aClass.getField("anInteger").get(anObjectOfAClass), is(434343));
+        assertThat(aClass.getField("aBigInteger").get(anObjectOfAClass), is(new BigInteger("5844")));
+        assertThat(aClass.getField("aChar").get(anObjectOfAClass), is('l'));
+        assertThat(aClass.getField("aBoolean").get(anObjectOfAClass), is(true));
     }
 
     @Test
@@ -42,7 +42,7 @@ public class OnTheFlyCompilerTest {
         Class<?> aClass = aClassCt.toClass();
         Object anObjectOfAClass = aClass.newInstance();
 
-        Assert.assertThat(aClass.getMethod("echo", String.class).invoke(anObjectOfAClass, "A message"),
+        assertThat(aClass.getMethod("echo", String.class).invoke(anObjectOfAClass, "A message"),
                 is("A message"));
     }
 

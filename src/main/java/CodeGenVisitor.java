@@ -10,6 +10,18 @@ public class CodeGenVisitor extends SchemeBaseVisitor<List<String>> {
     private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "boolean %s = %s;";
 
     @Override
+    public List<String> visitForm(SchemeParser.FormContext form) {
+        List<String> output = new ArrayList<>();
+
+        SchemeParser.ExpressionContext expression = form.expression();
+        String constantCode = visitConstant(expression.constant()).get(0);
+
+        output.add(String.format("public String printConstant(){return String.valueOf(%s);}", constantCode));
+
+        return output;
+    }
+
+    @Override
     public List<String> visitConstant(SchemeParser.ConstantContext constant) {
         String generatedCode = "";
 

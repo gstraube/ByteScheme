@@ -1,13 +1,13 @@
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.Assert;
 import org.junit.Test;
 import parser.ErrorListener;
 
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public class CodeGenVisitorTest {
 
@@ -15,11 +15,11 @@ public class CodeGenVisitorTest {
 
     @Test
     public void constants_are_processed_correctly() {
-        Assert.assertThat(visitParseTreeForInput("20414342334"), is("new java.math.BigInteger(\"20414342334\")"));
-        Assert.assertThat(visitParseTreeForInput("\"a string\""), is("\"a string\""));
-        Assert.assertThat(visitParseTreeForInput("#\\λ"), is("'λ'"));
-        Assert.assertThat(visitParseTreeForInput("#t"), is("true"));
-        Assert.assertThat(visitParseTreeForInput("#f"), is("false"));
+        assertThat(visitParseTreeForInput("20414342334"), is("new java.math.BigInteger(\"20414342334\")"));
+        assertThat(visitParseTreeForInput("\"a string\""), is("\"a string\""));
+        assertThat(visitParseTreeForInput("#\\λ"), is("'λ'"));
+        assertThat(visitParseTreeForInput("#t"), is("true"));
+        assertThat(visitParseTreeForInput("#f"), is("false"));
     }
 
     @Test
@@ -34,17 +34,17 @@ public class CodeGenVisitorTest {
         expectedOutput += "String e4 = \"another string\";";
         expectedOutput += "java.math.BigInteger e5 = new java.math.BigInteger(\"4343323232324\");}";
 
-        Assert.assertThat(visitParseTreeForInput(input), is(expectedOutput));
+        assertThat(visitParseTreeForInput(input), is(expectedOutput));
     }
 
     @Test
     public void variable_definitions_with_constants_are_processed_correctly() {
-        Assert.assertThat(visitParseTreeForInput("(define var1 51)"),
+        assertThat(visitParseTreeForInput("(define var1 51)"),
                 is("java.math.BigInteger var1 = new java.math.BigInteger(\"51\");"));
-        Assert.assertThat(visitParseTreeForInput("(define var2 \"a string\")"), is("String var2 = \"a string\";"));
-        Assert.assertThat(visitParseTreeForInput("(define var3 #\\λ)"), is("char var3 = 'λ';"));
-        Assert.assertThat(visitParseTreeForInput("(define var4 #t)"), is("boolean var4 = true;"));
-        Assert.assertThat(visitParseTreeForInput("(define var5 #f)"), is("boolean var5 = false;"));
+        assertThat(visitParseTreeForInput("(define var2 \"a string\")"), is("String var2 = \"a string\";"));
+        assertThat(visitParseTreeForInput("(define var3 #\\λ)"), is("char var3 = 'λ';"));
+        assertThat(visitParseTreeForInput("(define var4 #t)"), is("boolean var4 = true;"));
+        assertThat(visitParseTreeForInput("(define var5 #f)"), is("boolean var5 = false;"));
     }
 
     private String visitParseTreeForInput(String input) {
