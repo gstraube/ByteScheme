@@ -1,12 +1,21 @@
 buildscript {
   repositories {
     mavenCentral()
+    maven {
+   	  name 'JFrog OSS snapshot repo'
+      url  'https://oss.jfrog.org/oss-snapshot-local/'
+    }
+    jcenter()
+  }
+
+  dependencies {
+    classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1'
   }
 }
 
 apply plugin: 'java'
 apply plugin: 'idea'
-apply plugin: 'antlr'
+apply plugin: 'me.champeau.gradle.antlr4'
 
 jar {
   baseName = 'ByteScheme'
@@ -15,11 +24,19 @@ jar {
 
 repositories {
   mavenCentral()
+  jcenter()
 }
 
 dependencies {
   compile('org.antlr:antlr4-runtime:4.5')
   compile('org.javassist:javassist:3.20.0-GA')
+}
+
+
+compileJava.dependsOn antlr4
+sourceSets.main.java.srcDirs += antlr4.output
+configurations {
+   compile.extendsFrom antlr4
 }
 
 task wrapper(type: Wrapper) {
