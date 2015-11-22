@@ -30,8 +30,9 @@ repositories {
 dependencies {
   compile('org.antlr:antlr4-runtime:4.5')
   compile('org.javassist:javassist:3.20.0-GA')
+  testCompile('junit:junit:4.11')
+  testCompile('org.hamcrest:hamcrest-all:1.3')
 }
-
 
 compileJava.dependsOn antlr4
 sourceSets.main.java.srcDirs += antlr4.output
