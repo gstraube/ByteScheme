@@ -1,7 +1,4 @@
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
+import javassist.*;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -12,6 +9,7 @@ import parser.ErrorListener;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
@@ -26,12 +24,15 @@ public class InterpreterTest {
             "1", "42", "-1237", "#t",
             "#\\λ", "#\\newline", "#\\space", "\"a string\""
     };
+
     private CtClass mainClassCt;
+
+    private static AtomicInteger classIndex = new AtomicInteger(0);
 
     @Before
     public void setup() {
         ClassPool pool = ClassPool.getDefault();
-        mainClassCt = pool.makeClass("Main");
+        mainClassCt = pool.makeClass(String.format("Main%d", classIndex.getAndIncrement()));
     }
 
     @Test
@@ -49,12 +50,22 @@ public class InterpreterTest {
         assertThat(interpret.get(7), is("a string"));
     }
 
+    @Test
+    public void variable_expressions_evaluate_to_the_correct_value() {
+        String input = "(define a_variable 42) a_variable";
+        assertThat(interpret(input).get(0), is("42"));
+    }
+
     private List<String> interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
         Class<?> mainClass;
         List<String> outputs = new ArrayList<>();
 
         try {
+            for (String variableDefinition : generatedCode.getVariableDefinitions()) {
+                mainClassCt.addField(CtField.make(variableDefinition, mainClassCt));
+            }
+
             for (String method : generatedCode.getMethodsToBeDeclared()) {
                 String escapedMethod = method.replace("\n", "\\n");
                 mainClassCt.addMethod(CtMethod.make(escapedMethod, mainClassCt));
@@ -72,7 +83,7 @@ public class InterpreterTest {
             e.printStackTrace();
         }
 
-        mainClassCt.detach();
+        mainClassCt.defrost();
 
         return outputs;
     }

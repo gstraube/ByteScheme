@@ -1,4 +1,5 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,16 +16,26 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
     public GeneratedCode visitForm(SchemeParser.FormContext form) {
         GeneratedCode generatedCode = GeneratedCode.empty();
 
-
         if (form.expression() != null) {
-            SchemeParser.ExpressionContext expression = form.expression();
-            String constantCode = visitConstant(expression.constant()).getConstant(0);
+            if (form.expression().constant() != null) {
+                SchemeParser.ExpressionContext expression = form.expression();
+                String constantCode = visitConstant(expression.constant()).getConstant(0);
 
-            int constantIndex = constantsCounter.getAndIncrement();
-            generatedCode.addMethodToBeDeclared(String.format("public String printConstant%d(){return String.valueOf(%s);}",
-                    constantIndex, constantCode));
-            generatedCode.addMethodToBeCalled("printConstant" + constantIndex);
+                int constantIndex = constantsCounter.getAndIncrement();
+                generatedCode.addMethodToBeDeclared(String.format("public String printConstant%d(){return String.valueOf(%s);}",
+                        constantIndex, constantCode));
+                generatedCode.addMethodToBeCalled("printConstant" + constantIndex);
+
+            }
+            TerminalNode identifier = form.expression().IDENTIFIER();
+            if (identifier != null) {
+                String identifierText = identifier.getText();
+                generatedCode.addMethodToBeDeclared(String.format("public String %s(){return String.valueOf(%s);}",
+                        identifierText, identifierText));
+                generatedCode.addMethodToBeCalled(identifierText);
+            }
         }
+
         if (form.definition() != null) {
             return visitVariable_definition(form.definition().variable_definition());
         }
