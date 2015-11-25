@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
 import static org.hamcrest.Matchers.is;
@@ -52,8 +54,21 @@ public class InterpreterTest {
 
     @Test
     public void variable_expressions_evaluate_to_the_correct_value() {
-        String input = "(define a_variable 42) a_variable";
-        assertThat(interpret(input).get(0), is("42"));
+        Stream<String> definitions = IntStream.range(0, CONSTANTS.length)
+                .parallel()
+                .mapToObj(index -> String.format("(define a_variable%d %s) a_variable%d",
+                        index, CONSTANTS[index], index));
+        String input = definitions.collect(Collectors.joining(" "));
+
+        List<String> interpret = interpret(input);
+        assertThat(interpret.get(0), is("1"));
+        assertThat(interpret.get(1), is("42"));
+        assertThat(interpret.get(2), is("-1237"));
+        assertThat(interpret.get(3), is("true"));
+        assertThat(interpret.get(4), is("λ"));
+        assertThat(interpret.get(5), is("\n"));
+        assertThat(interpret.get(6), is(" "));
+        assertThat(interpret.get(7), is("a string"));
     }
 
     private List<String> interpret(String input) {
@@ -63,7 +78,8 @@ public class InterpreterTest {
 
         try {
             for (String variableDefinition : generatedCode.getVariableDefinitions()) {
-                mainClassCt.addField(CtField.make(variableDefinition, mainClassCt));
+                String escapedDefinition = variableDefinition.replace("\n", "\\n");
+                mainClassCt.addField(CtField.make(escapedDefinition, mainClassCt));
             }
 
             for (String method : generatedCode.getMethodsToBeDeclared()) {
