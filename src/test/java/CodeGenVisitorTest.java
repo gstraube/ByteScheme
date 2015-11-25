@@ -62,6 +62,18 @@ public class CodeGenVisitorTest {
         assertThat(variableDefinitions.get(5), is("boolean var6 = false;"));
     }
 
+    @Test
+    public void correct_code_is_generated_for_variable_definitions_referencing_other_variables() {
+        String input = "(define var1 \"a string\") (define var2 var1)";
+
+        GeneratedCode generatedCode = visitParseTreeForInput(input);
+        List<String> variableDefinitions = generatedCode.getVariableDefinitions();
+        assertThat(variableDefinitions.size(), is(2));
+
+        assertThat(variableDefinitions.get(0), is("String var1 = \"a string\";"));
+        assertThat(variableDefinitions.get(1), is("String var2 = var1;"));
+    }
+
     private GeneratedCode visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

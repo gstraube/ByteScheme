@@ -1,6 +1,8 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
@@ -9,6 +11,8 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
     private static final String CHAR_CONSTANT_VAR_DEFINITION = "char %s = %s;";
     private static final String STRING_CONSTANT_VAR_DEFINITION = "String %s = %s;";
     private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "boolean %s = %s;";
+
+    private Map<String, String> identifierToVariableDefinition = new HashMap<>();
 
     AtomicInteger constantsCounter = new AtomicInteger(0);
 
@@ -83,34 +87,54 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
         return generatedCode;
     }
 
-
     @Override
     public GeneratedCode visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
+        GeneratedCode generatedCode = GeneratedCode.empty();
         String identifier = variableDefinition.IDENTIFIER().getText();
-        SchemeParser.ConstantContext constant = variableDefinition.expression().constant();
 
-        return createVariableDefinitionForConstant(identifier, constant);
+        SchemeParser.ExpressionContext expression = variableDefinition.expression();
+        if (expression.constant() != null) {
+            String variableDefinitionForConstant = createVariableDefinitionForConstant(identifier,
+                    expression.constant());
+            identifierToVariableDefinition.put(identifier, variableDefinitionForConstant);
+            generatedCode.addVariableDefinition(variableDefinitionForConstant);
+
+            return generatedCode;
+        }
+        if (expression.IDENTIFIER() != null) {
+            String referencedVariableIdentifier = expression.IDENTIFIER().getText();
+            String referencedVariableDefinition = identifierToVariableDefinition.get(referencedVariableIdentifier);
+
+            String leftHandOfDefinition = referencedVariableDefinition.split("=")[0];
+            String type = leftHandOfDefinition.split(" ")[0];
+
+            generatedCode.addVariableDefinition(String.format("%s %s = %s;", type, identifier,
+                    referencedVariableIdentifier));
+
+            return generatedCode;
+        }
+
+        return GeneratedCode.empty();
     }
 
-    private GeneratedCode createVariableDefinitionForConstant(String identifier,
+    private String createVariableDefinitionForConstant(String identifier,
                                                               SchemeParser.ConstantContext constant) {
-        GeneratedCode generatedCode = GeneratedCode.empty();
         String text = visitConstant(constant).getConstant(0);
 
         if (constant.NUMBER() != null) {
-            generatedCode.addVariableDefinition(String.format(INTEGER_CONSTANT_VAR_DEFINITION, identifier, text));
+            return String.format(INTEGER_CONSTANT_VAR_DEFINITION, identifier, text);
         }
         if (constant.CHARACTER() != null) {
-            generatedCode.addVariableDefinition(String.format(CHAR_CONSTANT_VAR_DEFINITION, identifier, text));
+            return String.format(CHAR_CONSTANT_VAR_DEFINITION, identifier, text);
         }
         if (constant.STRING() != null) {
-            generatedCode.addVariableDefinition(String.format(STRING_CONSTANT_VAR_DEFINITION, identifier, text));
+            return String.format(STRING_CONSTANT_VAR_DEFINITION, identifier, text);
         }
         if (constant.BOOLEAN() != null) {
-            generatedCode.addVariableDefinition(String.format(BOOLEAN_CONSTANT_VAR_DEFINITION, identifier, text));
+            return String.format(BOOLEAN_CONSTANT_VAR_DEFINITION, identifier, text);
         }
 
-        return generatedCode;
+        return "";
     }
 
     @Override
