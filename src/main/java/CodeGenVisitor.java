@@ -7,12 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
 
-    private static final String INTEGER_CONSTANT_VAR_DEFINITION = "java.math.BigInteger %s = %s;";
-    private static final String CHAR_CONSTANT_VAR_DEFINITION = "char %s = %s;";
-    private static final String STRING_CONSTANT_VAR_DEFINITION = "String %s = %s;";
-    private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "boolean %s = %s;";
-
-    private Map<String, String> identifierToVariableDefinition = new HashMap<>();
+    private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
 
     AtomicInteger constantsCounter = new AtomicInteger(0);
 
@@ -94,22 +89,21 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
 
         SchemeParser.ExpressionContext expression = variableDefinition.expression();
         if (expression.constant() != null) {
-            String variableDefinitionForConstant = createVariableDefinitionForConstant(identifier,
+            VariableDefinition variableDefinitionForConstant = createVariableDefinitionForConstant(identifier,
                     expression.constant());
             identifierToVariableDefinition.put(identifier, variableDefinitionForConstant);
-            generatedCode.addVariableDefinition(variableDefinitionForConstant);
+            generatedCode.addVariableDefinition(variableDefinitionForConstant.toString());
 
             return generatedCode;
         }
         if (expression.IDENTIFIER() != null) {
             String referencedVariableIdentifier = expression.IDENTIFIER().getText();
-            String referencedVariableDefinition = identifierToVariableDefinition.get(referencedVariableIdentifier);
+            VariableDefinition referencedVariableDefinition =
+                    identifierToVariableDefinition.get(referencedVariableIdentifier);
 
-            String leftHandOfDefinition = referencedVariableDefinition.split("=")[0];
-            String type = leftHandOfDefinition.split(" ")[0];
+            VariableDefinition definition = referencedVariableDefinition.referencedBy(identifier);
 
-            generatedCode.addVariableDefinition(String.format("%s %s = %s;", type, identifier,
-                    referencedVariableIdentifier));
+            generatedCode.addVariableDefinition(definition.toString());
 
             return generatedCode;
         }
@@ -117,24 +111,21 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
         return GeneratedCode.empty();
     }
 
-    private String createVariableDefinitionForConstant(String identifier,
+    private VariableDefinition createVariableDefinitionForConstant(String identifier,
                                                               SchemeParser.ConstantContext constant) {
         String text = visitConstant(constant).getConstant(0);
 
         if (constant.NUMBER() != null) {
-            return String.format(INTEGER_CONSTANT_VAR_DEFINITION, identifier, text);
+            return VariableDefinition.createForBigInteger(identifier, text);
         }
         if (constant.CHARACTER() != null) {
-            return String.format(CHAR_CONSTANT_VAR_DEFINITION, identifier, text);
+            return VariableDefinition.createForChar(identifier, text);
         }
         if (constant.STRING() != null) {
-            return String.format(STRING_CONSTANT_VAR_DEFINITION, identifier, text);
-        }
-        if (constant.BOOLEAN() != null) {
-            return String.format(BOOLEAN_CONSTANT_VAR_DEFINITION, identifier, text);
+            return VariableDefinition.createForString(identifier, text);
         }
 
-        return "";
+        return VariableDefinition.createForBoolean(identifier, text);
     }
 
     @Override
@@ -145,6 +136,74 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
     @Override
     protected GeneratedCode aggregateResult(GeneratedCode aggregate, GeneratedCode nextResult) {
         return aggregate.mergeWith(nextResult);
+    }
+
+    private static class VariableDefinition {
+
+        private static final String INTEGER_CONSTANT_VAR_DEFINITION = "java.math.BigInteger %s = %s;";
+        private static final String CHAR_CONSTANT_VAR_DEFINITION = "char %s = %s;";
+        private static final String STRING_CONSTANT_VAR_DEFINITION = "String %s = %s;";
+        private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "boolean %s = %s;";
+
+        private VariableType type;
+        private String identifier;
+        private String value;
+
+        public static VariableDefinition createForBigInteger(String identifier, String value) {
+            return new VariableDefinition(VariableType.BIG_INTEGER, identifier, value);
+        }
+
+        public static VariableDefinition createForChar(String identifier, String value) {
+            return new VariableDefinition(VariableType.CHAR, identifier, value);
+        }
+
+        public static VariableDefinition createForString(String identifier, String value) {
+            return new VariableDefinition(VariableType.STRING, identifier, value);
+        }
+
+        public static VariableDefinition createForBoolean(String identifier, String value) {
+            return new VariableDefinition(VariableType.BOOLEAN, identifier, value);
+        }
+
+        @Override
+        public String toString() {
+            String template;
+
+            switch (type) {
+                case BIG_INTEGER:
+                    template = INTEGER_CONSTANT_VAR_DEFINITION;
+                    break;
+                case CHAR:
+                    template = CHAR_CONSTANT_VAR_DEFINITION;
+                    break;
+                case STRING:
+                    template = STRING_CONSTANT_VAR_DEFINITION;
+                    break;
+                case BOOLEAN:
+                    template = BOOLEAN_CONSTANT_VAR_DEFINITION;
+                    break;
+                default:
+                    throw new ParseCancellationException("Unknown type in variable definition");
+            }
+
+            return String.format(template, identifier, value);
+        }
+
+        private VariableDefinition(VariableType type, String identifier, String value) {
+            this.type = type;
+            this.identifier = identifier;
+            this.value = value;
+        }
+
+        public VariableDefinition referencedBy(String identifier) {
+            this.value = this.identifier;
+            this.identifier = identifier;
+            return this;
+        }
+
+        private enum VariableType {
+            BIG_INTEGER, CHAR, STRING, BOOLEAN
+        }
     }
 
 }
