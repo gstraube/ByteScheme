@@ -9,8 +9,9 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
 
     private static final String PRINT_CONSTANT_TEMPLATE
             = "public String printConstant%d(){return OutputFormatter.output(%s);}";
-    public static final String PRINT_VARIABLE_TEMPLATE
+    private static final String PRINT_VARIABLE_TEMPLATE
             = "public String %s(){return OutputFormatter.output(%s);}";
+    private static final String UNDEFINED_VARIABLE_EXCEPTION_MESSAGE = "Undefined variable '%s'";
     private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
 
     AtomicInteger constantsCounter = new AtomicInteger(0);
@@ -102,6 +103,12 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
         }
         if (expression.IDENTIFIER() != null) {
             String referencedVariableIdentifier = expression.IDENTIFIER().getText();
+
+            if (!identifierToVariableDefinition.containsKey(referencedVariableIdentifier)) {
+                throw new ParseCancellationException(String.format(UNDEFINED_VARIABLE_EXCEPTION_MESSAGE,
+                        referencedVariableIdentifier));
+            }
+
             VariableDefinition referencedVariableDefinition =
                     identifierToVariableDefinition.get(referencedVariableIdentifier);
 

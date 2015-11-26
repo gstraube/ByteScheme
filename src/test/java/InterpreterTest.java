@@ -92,6 +92,14 @@ public class InterpreterTest {
         interpret("\"\\\"");
     }
 
+    @Test
+    public void trying_to_reference_an_undefined_variable_causes_an_exception() {
+        expectedException.expect(ParseCancellationException.class);
+        expectedException.expectMessage("Undefined variable 'undefined_variable'");
+
+        visitParseTreeForInput("(define a_variable undefined_variable)");
+    }
+
     private List<String> interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
         Class<?> mainClass;
