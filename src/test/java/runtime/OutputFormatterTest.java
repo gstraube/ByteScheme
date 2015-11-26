@@ -18,18 +18,18 @@ public class OutputFormatterTest {
 
     @Test
     public void characters_are_formatted_correctly() {
-        assertThat(OutputFormatter.output('a'), is("a"));
-        assertThat(OutputFormatter.output('\n'), is("#\\newline"));
-        assertThat(OutputFormatter.output(' '), is("#\\space"));
+        assertThat(output('a'), is("#\\a"));
+        assertThat(output('\n'), is("#\\newline"));
+        assertThat(output(' '), is("#\\space"));
     }
 
     @Test
     public void strings_are_formatted_correctly() {
-        assertThat(OutputFormatter.output("a string"), is("a string"));
+        assertThat(output("a string"), is("a string"));
     }
 
     @Test
     public void integers_are_formatted_correctly() {
-        assertThat(OutputFormatter.output(new BigInteger("469284342")), is("469284342"));
+        assertThat(output(new BigInteger("469284342")), is("469284342"));
     }
 }

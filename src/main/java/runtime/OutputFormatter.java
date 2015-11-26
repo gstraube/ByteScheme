@@ -15,7 +15,7 @@ public class OutputFormatter {
             case ' ':
                 return "#\\space";
             default:
-                return String.valueOf(character);
+                return String.format("#\\%c", character);
         }
     }
 
