@@ -1,9 +1,12 @@
 import javassist.*;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import parser.ErrorListener;
 
 import java.lang.reflect.InvocationTargetException;
@@ -19,6 +22,9 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 public class InterpreterTest {
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     CodeGenVisitor codeGenVisitor;
 
@@ -70,6 +76,20 @@ public class InterpreterTest {
         assertThat(interpret.get(5), is("#\\newline"));
         assertThat(interpret.get(6), is("#\\space"));
         assertThat(interpret.get(7), is("a string"));
+    }
+
+    @Test
+    public void quotation_marks_are_not_allowed_in_string_constants() {
+        expectedException.expect(ParseCancellationException.class);
+
+        interpret("\"\"\"");
+    }
+
+    @Test
+    public void backslashes_are_not_allowed_in_string_constants() {
+        expectedException.expect(ParseCancellationException.class);
+
+        interpret("\"\\\"");
     }
 
     private List<String> interpret(String input) {
