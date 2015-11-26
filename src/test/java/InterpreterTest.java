@@ -34,6 +34,7 @@ public class InterpreterTest {
     @Before
     public void setup() {
         ClassPool pool = ClassPool.getDefault();
+        pool.importPackage("runtime");
         mainClassCt = pool.makeClass(String.format("Main%d", classIndex.getAndIncrement()));
     }
 
@@ -45,10 +46,10 @@ public class InterpreterTest {
         assertThat(interpret.get(0), is("1"));
         assertThat(interpret.get(1), is("42"));
         assertThat(interpret.get(2), is("-1237"));
-        assertThat(interpret.get(3), is("true"));
+        assertThat(interpret.get(3), is("#t"));
         assertThat(interpret.get(4), is("λ"));
-        assertThat(interpret.get(5), is("\n"));
-        assertThat(interpret.get(6), is(" "));
+        assertThat(interpret.get(5), is("#\\newline"));
+        assertThat(interpret.get(6), is("#\\space"));
         assertThat(interpret.get(7), is("a string"));
     }
 
@@ -64,10 +65,10 @@ public class InterpreterTest {
         assertThat(interpret.get(0), is("1"));
         assertThat(interpret.get(1), is("42"));
         assertThat(interpret.get(2), is("-1237"));
-        assertThat(interpret.get(3), is("true"));
+        assertThat(interpret.get(3), is("#t"));
         assertThat(interpret.get(4), is("λ"));
-        assertThat(interpret.get(5), is("\n"));
-        assertThat(interpret.get(6), is(" "));
+        assertThat(interpret.get(5), is("#\\newline"));
+        assertThat(interpret.get(6), is("#\\space"));
         assertThat(interpret.get(7), is("a string"));
     }
 

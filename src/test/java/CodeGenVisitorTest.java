@@ -26,7 +26,7 @@ public class CodeGenVisitorTest {
             assertThat(generatedCode.getMethodsToBeCalled().get(i), is(String.format(expectedOutput, i)));
         }
 
-        expectedOutput = "public String printConstant%d(){return String.valueOf(%s);}";
+        expectedOutput = "public String printConstant%d(){return OutputFormatter.output(%s);}";
         assertThat(generatedCode.getMethodsToBeDeclared().get(0), is(String.format(expectedOutput,
                 0, "new java.math.BigInteger(\"20414342334\")")));
         assertThat(generatedCode.getMethodsToBeDeclared().get(1), is(String.format(expectedOutput,
@@ -45,8 +45,8 @@ public class CodeGenVisitorTest {
 
     @Test
     public void variable_definitions_with_constants_are_processed_correctly() {
-        String input = "(define var1 51) (define var2 \"a string\")" +
-                "(define var3 #\\λ) (define var4 #\\newline) (define var5 #t) (define var6 #f)";
+        String input = "(define var0 51) (define var1 \"a string\")" +
+                "(define var2 #\\λ) (define var3 #\\newline) (define var4 #t) (define var5 #f)";
 
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
@@ -54,12 +54,24 @@ public class CodeGenVisitorTest {
         assertThat(variableDefinitions.size(), is(6));
 
         assertThat(variableDefinitions.get(0),
-                is("java.math.BigInteger var1 = new java.math.BigInteger(\"51\");"));
-        assertThat(variableDefinitions.get(1), is("String var2 = \"a string\";"));
-        assertThat(variableDefinitions.get(2), is("char var3 = 'λ';"));
-        assertThat(variableDefinitions.get(3), is("char var4 = '\n';"));
-        assertThat(variableDefinitions.get(4), is("boolean var5 = true;"));
-        assertThat(variableDefinitions.get(5), is("boolean var6 = false;"));
+                is("java.math.BigInteger var0 = new java.math.BigInteger(\"51\");"));
+        assertThat(variableDefinitions.get(1), is("String var1 = \"a string\";"));
+        assertThat(variableDefinitions.get(2), is("char var2 = 'λ';"));
+        assertThat(variableDefinitions.get(3), is("char var3 = '\n';"));
+        assertThat(variableDefinitions.get(4), is("boolean var4 = true;"));
+        assertThat(variableDefinitions.get(5), is("boolean var5 = false;"));
+
+        input = "var0 var1 var2 var3 var4 var5";
+        generatedCode = visitParseTreeForInput(input);
+
+        String expectedOutput = "public String %s(){return OutputFormatter.output(%s);}";
+        assertThat(generatedCode.getMethodsToBeCalled().size(), is(6));
+        for (int i = 0; i < 6; i++) {
+            String variableIdentifier = String.format("var%d", i);
+            assertThat(generatedCode.getMethodsToBeCalled().get(i), is(variableIdentifier));
+            assertThat(generatedCode.getMethodsToBeDeclared().get(i),
+                    is(String.format(expectedOutput, variableIdentifier, variableIdentifier)));
+        }
     }
 
     @Test

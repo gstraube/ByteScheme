@@ -7,6 +7,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
 
+    private static final String PRINT_CONSTANT_TEMPLATE
+            = "public String printConstant%d(){return OutputFormatter.output(%s);}";
+    public static final String PRINT_VARIABLE_TEMPLATE
+            = "public String %s(){return OutputFormatter.output(%s);}";
     private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
 
     AtomicInteger constantsCounter = new AtomicInteger(0);
@@ -21,15 +25,15 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
                 String constantCode = visitConstant(expression.constant()).getConstant(0);
 
                 int constantIndex = constantsCounter.getAndIncrement();
-                generatedCode.addMethodToBeDeclared(String.format("public String printConstant%d(){return String.valueOf(%s);}",
-                        constantIndex, constantCode));
+                generatedCode.addMethodToBeDeclared(String.format(PRINT_CONSTANT_TEMPLATE, constantIndex,
+                        constantCode));
                 generatedCode.addMethodToBeCalled("printConstant" + constantIndex);
 
             }
             TerminalNode identifier = form.expression().IDENTIFIER();
             if (identifier != null) {
                 String identifierText = identifier.getText();
-                generatedCode.addMethodToBeDeclared(String.format("public String %s(){return String.valueOf(%s);}",
+                generatedCode.addMethodToBeDeclared(String.format(PRINT_VARIABLE_TEMPLATE,
                         identifierText, identifierText));
                 generatedCode.addMethodToBeCalled(identifierText);
             }
