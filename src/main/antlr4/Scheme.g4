@@ -7,8 +7,7 @@ form: definition
     ;
 
 definition: variable_definition
-          | procedure_definition
-          | '(' 'begin' definition* ')';
+          | procedure_definition;
 
 variable_definition: '(' 'define' IDENTIFIER expression ')';
 

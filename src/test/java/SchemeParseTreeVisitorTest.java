@@ -78,16 +78,6 @@ public class SchemeParseTreeVisitorTest {
     }
 
     @Test
-    public void multiple_definitions_can_be_grouped_using_the_begin_keyword() {
-        visitParseTreeForInput("(begin (begin (define a \"foo\") (define b 21)) (define c #t))");
-
-        assertThat(schemeParseTreeVisitor.variableDefinitions.size(), is(3));
-        assertThat(schemeParseTreeVisitor.variableDefinitions.get("a").getText(), is("\"foo\""));
-        assertThat(schemeParseTreeVisitor.variableDefinitions.get("b").getText(), is("21"));
-        assertThat(schemeParseTreeVisitor.variableDefinitions.get("c").getText(), is("#t"));
-    }
-
-    @Test
     public void quoting_a_constant_once_returns_the_constant() {
         for (String constant : CONSTANTS) {
             String result = visitParseTreeForInput(String.format("(quote %s)", constant));
