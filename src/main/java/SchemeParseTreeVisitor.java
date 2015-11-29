@@ -1,5 +1,4 @@
 import lang.*;
-import lang.Vector;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -214,8 +213,6 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
                 datum = extractConstant(datumContext.constant());
             } else if (datumContext.list() != null) {
                 datum = new SList(collectElements(datumContext.list().datum()));
-            } else if (datumContext.vector() != null) {
-                datum = new Vector(collectElements(datumContext.vector().datum()));
             } else {
                 /*
                     TODO
@@ -248,9 +245,6 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
         for (SchemeParser.DatumContext datum : data) {
             if (datum.list() != null) {
                 elements.add(new SList(collectElements(datum.list().datum())));
-            }
-            if (datum.vector() != null) {
-                elements.add(new Vector(collectElements(datum.vector().datum())));
             }
             if (datum.constant() != null) {
                 elements.add(extractConstant(datum.constant()));

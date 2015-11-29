@@ -94,7 +94,7 @@ public class SchemeParseTreeVisitorTest {
 
     @Test
     public void quoting_a_sequence_of_data_in_parentheses_produces_a_list() {
-        String listElements = "(15 (\"abc\" #t) 7 #(1 2 3) (#\\u #f) 2 \"a_string\")";
+        String listElements = "(15 (\"abc\" #t) 7 (#\\u #f) 2 \"a_string\")";
         String input = "(quote " + listElements + ")";
         assertThat(visitParseTreeForInput(input), is(listElements));
     }
@@ -103,13 +103,6 @@ public class SchemeParseTreeVisitorTest {
     public void multiple_quotation_is_possible() {
         String input = "(quote (quote (quote (1 2 3))))";
         assertThat(visitParseTreeForInput(input), is("''(1 2 3)"));
-    }
-
-    @Test
-    public void quoting_a_sequence_of_data_in_parentheses_and_prefixed_with_a_number_sign_produces_a_vector() {
-        String listElements = "#(\"abc\" 1 #\\u 20 30 (#\\v #\\z #(1 2 3)))";
-        String input = "(quote " + listElements + ")";
-        assertThat(visitParseTreeForInput(input), is(listElements));
     }
 
     @Test
@@ -271,18 +264,6 @@ public class SchemeParseTreeVisitorTest {
         input = "(equal? '(1 2 3) '())";
         assertThat(visitParseTreeForInput(input), is("#f"));
         input = "(equal? '(1 2 3) '(1 2 #t))";
-        assertThat(visitParseTreeForInput(input), is("#f"));
-    }
-
-    @Test
-    public void equal_returns_true_for_two_vectors_containing_the_same_elements_and_false_otherwise() throws Exception {
-        String input = "(equal? '#(#t (\"foo\" \"bar\") #(#\\a 2)) '#(#t (\"foo\" \"bar\") #(#\\a 2)))";
-        assertThat(visitParseTreeForInput(input), is("#t"));
-        input = "(equal? '#(1) '#(1 (2 1)))";
-        assertThat(visitParseTreeForInput(input), is("#f"));
-        input = "(equal? '#(1 2 3) '#())";
-        assertThat(visitParseTreeForInput(input), is("#f"));
-        input = "(equal? '#(1 2 3) '#(1 2 #t))";
         assertThat(visitParseTreeForInput(input), is("#f"));
     }
 

@@ -26,12 +26,9 @@ application: '(' IDENTIFIER expression* ')';
 
 datum: constant
      | list
-     | vector
      | IDENTIFIER;
 
 list: '(' datum* ')';
-
-vector: '#(' datum* ')';
 
 constant: NUMBER
         | BOOLEAN
