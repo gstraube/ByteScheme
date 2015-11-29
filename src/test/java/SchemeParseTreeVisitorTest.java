@@ -78,37 +78,27 @@ public class SchemeParseTreeVisitorTest {
     }
 
     @Test
-    public void quoting_a_constant_once_returns_the_constant() {
-        for (String constant : CONSTANTS) {
-            String result = visitParseTreeForInput(String.format("(quote %s)", constant));
-            assertThat(result, is(constant));
-            result = visitParseTreeForInput(String.format("'%s", constant));
-            assertThat(result, is(constant));
-        }
-    }
-
-    @Test
-    public void quoting_an_identifier_produces_a_symbol() {
-        assertThat(visitParseTreeForInput("(quote an_identifier)"), is("an_identifier"));
-    }
-
-    @Test
-    public void quoting_a_sequence_of_data_in_parentheses_produces_a_list() {
+    public void applying_the_list_procedure_to_a_sequence_of_data_in_parentheses_produces_a_list() {
         String listElements = "(15 (\"abc\" #t) 7 (#\\u #f) 2 \"a_string\")";
-        String input = "(quote " + listElements + ")";
+        String input = "(list 15 (list \"abc\" #t) 7 (list #\\u #f) 2 \"a_string\")";
         assertThat(visitParseTreeForInput(input), is(listElements));
     }
 
     @Test
-    public void multiple_quotation_is_possible() {
-        String input = "(quote (quote (quote (1 2 3))))";
-        assertThat(visitParseTreeForInput(input), is("''(1 2 3)"));
+    public void multiple_application_of_list_is_possible() {
+        String input = "(list 1 2 (list \"a string\"))";
+        assertThat(visitParseTreeForInput(input), is("(1 2 (\"a string\"))"));
     }
 
     @Test
-    public void all_character_symbols_are_supported() {
-        String characterSymbolsInList = "(+ - ... !.. $.+ %.- &.! *.: /:. :+. <-. =. >. ?. ~. _. ^.)";
-        assertThat(visitParseTreeForInput("'" + characterSymbolsInList), is(characterSymbolsInList));
+    public void all_character_symbols_are_supported_as_variable_names() {
+        String[] characterSymbolsInList = {"+", "-", "...", "!..", "$.+", "%.-", "&.!",
+                "*.:", "/:.", ":+.", "<-.", "=.", ">.", "?.", "~.", "_.", "^."};
+
+        for (String characterSymbol : characterSymbolsInList) {
+            String input = String.format("(define %s 42) %s", characterSymbol, characterSymbol);
+            assertThat(visitParseTreeForInput(input), is("42"));
+        }
     }
 
     @Test
@@ -161,9 +151,9 @@ public class SchemeParseTreeVisitorTest {
 
     @Test
     public void car_returns_the_first_element_of_the_list() {
-        String input = "(car '(1 2 3))";
+        String input = "(car (list 1 2 3))";
         assertThat(visitParseTreeForInput(input), is("1"));
-        input = "(car '((\"abc\" \"xyz\") 5 (6 7) 8))";
+        input = "(car (list (list \"abc\" \"xyz\") 5 (list 6 7) 8))";
         assertThat(visitParseTreeForInput(input), is("(\"abc\" \"xyz\")"));
     }
 
@@ -172,14 +162,14 @@ public class SchemeParseTreeVisitorTest {
         expectedException.expect(ParseCancellationException.class);
         expectedException.expectMessage("Wrong argument type: Expected pair");
 
-        visitParseTreeForInput("(car '())");
+        visitParseTreeForInput("(car (list))");
     }
 
     @Test
     public void cdr_returns_all_elements_of_a_list_except_the_first_one() {
-        String input = "(cdr '(1 2 3))";
+        String input = "(cdr (list 1 2 3))";
         assertThat(visitParseTreeForInput(input), is("(2 3)"));
-        input = "(cdr '((\"abc\" \"xyz\") 5 (6 7) 8))";
+        input = "(cdr (list (list \"abc\" \"xyz\") 5 (list 6 7) 8))";
         assertThat(visitParseTreeForInput(input), is("(5 (6 7) 8)"));
     }
 
@@ -188,7 +178,7 @@ public class SchemeParseTreeVisitorTest {
         expectedException.expect(ParseCancellationException.class);
         expectedException.expectMessage("Wrong argument type: Expected pair");
 
-        visitParseTreeForInput("(cdr '())");
+        visitParseTreeForInput("(cdr (list))");
     }
 
     @Test
@@ -211,8 +201,8 @@ public class SchemeParseTreeVisitorTest {
     }
 
     @Test
-    public void a_procedure_definition_can_contain_a_quotation_in_its_body() throws Exception {
-        String input = "(define (foo) '(1 \"a_string\" (3 #t) #\\a)) (foo)";
+    public void a_procedure_definition_can_contain_a_list_in_its_body() throws Exception {
+        String input = "(define (foo) (list 1 \"a_string\" (list 3 #t) #\\a)) (foo)";
         assertThat(visitParseTreeForInput(input), is("(1 \"a_string\" (3 #t) #\\a)"));
     }
 
@@ -239,7 +229,7 @@ public class SchemeParseTreeVisitorTest {
     public void equal_returns_false_when_types_do_not_match() throws Exception {
         String input = "(equal? 42 \"forty-two\")";
         assertThat(visitParseTreeForInput(input), is("#f"));
-        input = "(equal? '(1 2 3) #t)";
+        input = "(equal? (list 1 2 3) #t)";
         assertThat(visitParseTreeForInput(input), is("#f"));
     }
 
@@ -257,13 +247,13 @@ public class SchemeParseTreeVisitorTest {
 
     @Test
     public void equal_returns_true_for_two_lists_containing_the_same_elements_and_false_otherwise() throws Exception {
-        String input = "(equal? '(1 \"foo\" 2 (#t 4) (5 6)) '(1 \"foo\" 2 (#t 4) (5 6)))";
+        String input = "(equal? (list 1 \"foo\" 2 (list #t 4) (list 5 6)) (list 1 \"foo\" 2 (list #t 4) (list 5 6)))";
         assertThat(visitParseTreeForInput(input), is("#t"));
-        input = "(equal? '(1 2 3) '(4 5))";
+        input = "(equal? (list 1 2 3) (list 4 5))";
         assertThat(visitParseTreeForInput(input), is("#f"));
-        input = "(equal? '(1 2 3) '())";
+        input = "(equal? (list 1 2 3) (list))";
         assertThat(visitParseTreeForInput(input), is("#f"));
-        input = "(equal? '(1 2 3) '(1 2 #t))";
+        input = "(equal? (list 1 2 3) (list 1 2 #t))";
         assertThat(visitParseTreeForInput(input), is("#f"));
     }
 

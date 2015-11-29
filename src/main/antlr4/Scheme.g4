@@ -14,13 +14,9 @@ variable_definition: '(' 'define' IDENTIFIER expression ')';
 procedure_definition: '(' 'define' '(' proc_name param* ')' definition* expression+ ')';
 
 expression: constant
-          | quotation
           | application
           | IDENTIFIER
           ;
-
-quotation: '(' 'quote' (quotation | datum) ')'
-         | '\'' (quotation | datum);
 
 application: '(' IDENTIFIER expression* ')';
 

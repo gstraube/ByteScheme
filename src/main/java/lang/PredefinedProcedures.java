@@ -14,6 +14,7 @@ public abstract class PredefinedProcedures {
     public static final Map<String, Procedure> NUMBER_COMPARATORS = new HashMap<>();
 
     static {
+        defineList();
         defineCar();
         defineCdr();
         defineAddition();
@@ -22,6 +23,15 @@ public abstract class PredefinedProcedures {
         defineQuotient();
         defineNumberComparators();
         defineEquality();
+    }
+
+    private static void defineList() {
+        LIST_PROCEDURES.put("list", new Procedure() {
+            @Override
+            public Datum apply(List<Datum> arguments) {
+                return new SList(arguments);
+            }
+        });
     }
 
     private static void defineNumberComparators() {

@@ -69,8 +69,6 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
                     value = extractConstant(lastExpression.constant());
                 } else if (lastExpression.IDENTIFIER() != null) {
                     value = evaluateVariable(lastExpression.IDENTIFIER());
-                } else if (lastExpression.quotation() != null) {
-                    value = applyQuotation(lastExpression.quotation());
                 } else {
                     throw new ParseCancellationException(
                             String.format("Could not evaluate body of procedure '%s'", procedureName));
@@ -132,9 +130,6 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
     private Datum evaluateExpression(SchemeParser.ExpressionContext expression) {
         if (expression.constant() != null) {
             return extractConstant(expression.constant());
-        }
-        if (expression.quotation() != null) {
-            return applyQuotation(expression.quotation());
         }
         if (expression.application() != null) {
             return evaluateApplication(expression.application());
@@ -202,31 +197,6 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
             returnExpression = expressions.get(2);
         }
         return evaluateExpression(returnExpression);
-    }
-
-    private Datum applyQuotation(SchemeParser.QuotationContext quotation) {
-        Datum datum;
-        if (quotation.datum() != null) {
-            SchemeParser.DatumContext datumContext = quotation.datum();
-
-            if (datumContext.constant() != null) {
-                datum = extractConstant(datumContext.constant());
-            } else if (datumContext.list() != null) {
-                datum = new SList(collectElements(datumContext.list().datum()));
-            } else {
-                /*
-                    TODO
-                    Quoted strings are symbols in Scheme
-                 */
-                String value = datumContext.IDENTIFIER().getText();
-                datum = new Constant<>(value, value);
-            }
-
-        } else {
-            datum = new Quotation(applyQuotation(quotation.quotation()));
-        }
-
-        return datum;
     }
 
     private Datum evaluateVariable(TerminalNode identifier) {
