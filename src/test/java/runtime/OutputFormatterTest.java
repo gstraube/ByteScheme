@@ -1,5 +1,6 @@
 package runtime;
 
+import lang.ListWrapper;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -32,4 +33,16 @@ public class OutputFormatterTest {
     public void integers_are_formatted_correctly() {
         assertThat(output(new BigInteger("469284342")), is("469284342"));
     }
+
+    @Test
+    public void a_list_is_formatted_correctly() {
+
+        ListWrapper listWrapper = ListWrapper.fromElements(new BigInteger("15"),
+                ListWrapper.fromElements("abc", true), new BigInteger("7"),
+                ListWrapper.fromElements('u', false), new BigInteger("2"),
+                "a_string");
+
+        assertThat(output(listWrapper), is("(15 (abc #t) 7 (#\\u #f) 2 a_string)"));
+    }
+
 }
