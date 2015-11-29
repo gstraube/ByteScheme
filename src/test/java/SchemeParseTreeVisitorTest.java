@@ -85,7 +85,7 @@ public class SchemeParseTreeVisitorTest {
     }
 
     @Test
-    public void multiple_application_of_list_is_possible() {
+    public void multiple_applications_of_list_is_possible() {
         String input = "(list 1 2 (list \"a string\"))";
         assertThat(visitParseTreeForInput(input), is("(1 2 (\"a string\"))"));
     }
