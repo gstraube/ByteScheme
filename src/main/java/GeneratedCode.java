@@ -30,15 +30,19 @@ public class GeneratedCode {
     }
 
     public List<String> getMethodsToBeDeclared() {
-        return methodsToBeDeclared;
+        return new ArrayList<>(methodsToBeDeclared);
     }
 
     public List<String> getMethodsToBeCalled() {
-        return methodsToBeCalled;
+        return new ArrayList<>(methodsToBeCalled);
     }
 
     public List<String> getVariableDefinitions() {
-        return variableDefinitions;
+        return new ArrayList<>(variableDefinitions);
+    }
+
+    public List<String> getConstants() {
+        return new ArrayList<>(constants);
     }
 
     public String getConstant(int index) {
@@ -66,4 +70,5 @@ public class GeneratedCode {
     public void addVariableDefinition(String variableDefinition) {
         variableDefinitions.add(variableDefinition);
     }
+
 }

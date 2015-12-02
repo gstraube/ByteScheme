@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 import parser.ErrorListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -14,33 +15,20 @@ public class CodeGenVisitorTest {
     CodeGenVisitor codeGenVisitor;
 
     @Test
-    public void top_level_constant_expressions_are_processed_correctly() {
+    public void constant_expressions_are_processed_correctly() {
         String input = "20414342334 \"a string\" #\\λ #t #f #\\newline #\\space";
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
-        assertThat(generatedCode.getMethodsToBeCalled().size(), is(7));
-        assertThat(generatedCode.getMethodsToBeDeclared().size(), is(7));
+        List<String> expectedOutput = new ArrayList<>();
+        expectedOutput.add("new java.math.BigInteger(\"20414342334\");");
+        expectedOutput.add("new String(\"a string\");");
+        expectedOutput.add("new Character('λ');");
+        expectedOutput.add("new Boolean(true);");
+        expectedOutput.add("new Boolean(false);");
+        expectedOutput.add("new Character('\\n');");
+        expectedOutput.add("new Character(' ');");
 
-        String expectedOutput = "printConstant%d";
-        for (int i = 0; i < 7; i++) {
-            assertThat(generatedCode.getMethodsToBeCalled().get(i), is(String.format(expectedOutput, i)));
-        }
-
-        expectedOutput = "public String printConstant%d(){return OutputFormatter.output(%s);}";
-        assertThat(generatedCode.getMethodsToBeDeclared().get(0), is(String.format(expectedOutput,
-                0, "new java.math.BigInteger(\"20414342334\")")));
-        assertThat(generatedCode.getMethodsToBeDeclared().get(1), is(String.format(expectedOutput,
-                1, "\"a string\"")));
-        assertThat(generatedCode.getMethodsToBeDeclared().get(2), is(String.format(expectedOutput,
-                2, "'λ'")));
-        assertThat(generatedCode.getMethodsToBeDeclared().get(3), is(String.format(expectedOutput,
-                3, "true")));
-        assertThat(generatedCode.getMethodsToBeDeclared().get(4), is(String.format(expectedOutput,
-                4, "false")));
-        assertThat(generatedCode.getMethodsToBeDeclared().get(5), is(String.format(expectedOutput,
-                5, "'\n'")));
-        assertThat(generatedCode.getMethodsToBeDeclared().get(6), is(String.format(expectedOutput,
-                6, "' '")));
+        assertThat(generatedCode.getConstants(), is(expectedOutput));
     }
 
     @Test
@@ -50,28 +38,15 @@ public class CodeGenVisitorTest {
 
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
-        List<String> variableDefinitions = generatedCode.getVariableDefinitions();
-        assertThat(variableDefinitions.size(), is(6));
+        List<String> expectedOutput = new ArrayList<>();
+        expectedOutput.add("java.math.BigInteger var0 = new java.math.BigInteger(\"51\");");
+        expectedOutput.add("String var1 = new String(\"a string\");");
+        expectedOutput.add("char var2 = new Character('λ');");
+        expectedOutput.add("char var3 = new Character('\\n');");
+        expectedOutput.add("boolean var4 = new Boolean(true);");
+        expectedOutput.add("boolean var5 = new Boolean(false);");
 
-        assertThat(variableDefinitions.get(0),
-                is("java.math.BigInteger var0 = new java.math.BigInteger(\"51\");"));
-        assertThat(variableDefinitions.get(1), is("String var1 = \"a string\";"));
-        assertThat(variableDefinitions.get(2), is("char var2 = 'λ';"));
-        assertThat(variableDefinitions.get(3), is("char var3 = '\n';"));
-        assertThat(variableDefinitions.get(4), is("boolean var4 = true;"));
-        assertThat(variableDefinitions.get(5), is("boolean var5 = false;"));
-
-        input = "var0 var1 var2 var3 var4 var5";
-        generatedCode = visitParseTreeForInput(input);
-
-        String expectedOutput = "public String %s(){return OutputFormatter.output(%s);}";
-        assertThat(generatedCode.getMethodsToBeCalled().size(), is(6));
-        for (int i = 0; i < 6; i++) {
-            String variableIdentifier = String.format("var%d", i);
-            assertThat(generatedCode.getMethodsToBeCalled().get(i), is(variableIdentifier));
-            assertThat(generatedCode.getMethodsToBeDeclared().get(i),
-                    is(String.format(expectedOutput, variableIdentifier, variableIdentifier)));
-        }
+        assertThat(generatedCode.getVariableDefinitions(), is(expectedOutput));
     }
 
     @Test
@@ -79,11 +54,11 @@ public class CodeGenVisitorTest {
         String input = "(define var1 \"a string\") (define var2 var1)";
 
         GeneratedCode generatedCode = visitParseTreeForInput(input);
-        List<String> variableDefinitions = generatedCode.getVariableDefinitions();
-        assertThat(variableDefinitions.size(), is(2));
 
-        assertThat(variableDefinitions.get(0), is("String var1 = \"a string\";"));
-        assertThat(variableDefinitions.get(1), is("String var2 = var1;"));
+        assertThat(generatedCode.getVariableDefinitions().get(0),
+                is("String var1 = new String(\"a string\");"));
+        assertThat(generatedCode.getVariableDefinitions().get(1),
+                is("String var2 = var1;"));
     }
 
     private GeneratedCode visitParseTreeForInput(String input) {
