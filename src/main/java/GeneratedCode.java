@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GeneratedCode {
 
@@ -10,23 +12,10 @@ public class GeneratedCode {
     private List<String> constants = new ArrayList<>();
     private List<String> variableDefinitions = new ArrayList<>();
 
-    private GeneratedCode() {
-    }
-
-    public static GeneratedCode empty() {
-        return new GeneratedCode();
-    }
-
-    public void addMethodToBeDeclared(String method) {
-        methodsToBeDeclared.add(method);
-    }
-
-    public void addMethodToBeCalled(String method) {
-        methodsToBeCalled.add(method);
-    }
-
-    public void addConstant(String constant) {
-        constants.add(constant);
+    public GeneratedCode(List<String> methodsToBeDeclared, List<String> variableDefinitions, List<String> constants) {
+        this.methodsToBeDeclared = methodsToBeDeclared;
+        this.variableDefinitions = variableDefinitions;
+        this.constants = constants;
     }
 
     public List<String> getMethodsToBeDeclared() {
@@ -45,30 +34,68 @@ public class GeneratedCode {
         return new ArrayList<>(constants);
     }
 
-    public String getConstant(int index) {
-        return constants.get(index);
-    }
+    public static class GeneratedCodeBuilder {
 
-    public GeneratedCode mergeWith(GeneratedCode nextResult) {
-        GeneratedCode merged = GeneratedCode.empty();
+        private List<String> mainMethod = new ArrayList<>();
+        private List<String> methodsToBeDeclared = new ArrayList<>();
+        private List<String> variableDefinitions = new ArrayList<>();
+        private List<String> constants = new ArrayList<>();
 
-        merged.methodsToBeCalled.addAll(this.methodsToBeCalled);
-        merged.methodsToBeCalled.addAll(nextResult.methodsToBeCalled);
+        public GeneratedCodeBuilder addVariableDefinitions(String... variableDefinitions) {
+            this.variableDefinitions.addAll(Arrays.asList(variableDefinitions));
+            return this;
+        }
 
-        merged.methodsToBeDeclared.addAll(this.methodsToBeDeclared);
-        merged.methodsToBeDeclared.addAll(nextResult.methodsToBeDeclared);
+        public GeneratedCodeBuilder addMethodsToBeDeclared(String... methodsToBeDeclared) {
+            this.methodsToBeDeclared.addAll(Arrays.asList(methodsToBeDeclared));
+            return this;
+        }
 
-        merged.variableDefinitions.addAll(this.variableDefinitions);
-        merged.variableDefinitions.addAll(nextResult.variableDefinitions);
+        public GeneratedCode build() {
+            mainMethod.add(0, "public static void main(String[] args){");
+            mainMethod.add("}");
 
-        merged.constants.addAll(this.constants);
-        merged.constants.addAll(nextResult.constants);
+            methodsToBeDeclared.add(mainMethod.stream().collect(Collectors.joining()));
 
-        return merged;
-    }
+            return new GeneratedCode(methodsToBeDeclared, variableDefinitions, constants);
+        }
 
-    public void addVariableDefinition(String variableDefinition) {
-        variableDefinitions.add(variableDefinition);
+        public GeneratedCodeBuilder addConstant(String constant) {
+            constants.add(constant);
+
+            return this;
+        }
+
+        public GeneratedCodeBuilder addVariableDefinition(String variable) {
+            variableDefinitions.add(variable);
+
+            return this;
+        }
+
+        public String getConstant(int index) {
+            return constants.get(index);
+        }
+
+        public GeneratedCodeBuilder mergeWith(GeneratedCodeBuilder other) {
+            GeneratedCodeBuilder merged = new GeneratedCodeBuilder();
+
+            merged.constants.addAll(constants);
+            merged.constants.addAll(other.constants);
+
+            merged.variableDefinitions.addAll(variableDefinitions);
+            merged.variableDefinitions.addAll(other.variableDefinitions);
+
+            merged.methodsToBeDeclared.addAll(methodsToBeDeclared);
+            merged.methodsToBeDeclared.addAll(other.methodsToBeDeclared);
+
+            return merged;
+        }
+
+        public GeneratedCodeBuilder addStatementsToMainMethod(String... statements) {
+            mainMethod.addAll(Arrays.asList(statements));
+
+            return this;
+        }
     }
 
 }

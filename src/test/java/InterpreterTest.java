@@ -146,7 +146,7 @@ public class InterpreterTest {
 
         ParseTree parseTree = parser.program();
         codeGenVisitor = new CodeGenVisitor();
-        return codeGenVisitor.visit(parseTree);
+        return codeGenVisitor.visit(parseTree).build();
     }
 
 }

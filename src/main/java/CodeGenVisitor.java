@@ -3,14 +3,14 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
+public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCodeBuilder> {
 
     private static final String UNDEFINED_VARIABLE_EXCEPTION_MESSAGE = "Undefined variable '%s'";
     private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
 
     @Override
-    public GeneratedCode visitConstant(SchemeParser.ConstantContext constant) {
-        GeneratedCode generatedCode = GeneratedCode.empty();
+    public GeneratedCode.GeneratedCodeBuilder visitConstant(SchemeParser.ConstantContext constant) {
+        GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
 
         String constantCode = "";
         if (constant.NUMBER() != null) {
@@ -47,14 +47,14 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
             constantCode = String.format("new Boolean(%b);", "#t".equals(constant.BOOLEAN().getText()));
         }
 
-        generatedCode.addConstant(constantCode);
+        codeBuilder.addConstant(constantCode);
 
-        return generatedCode;
+        return codeBuilder;
     }
 
     @Override
-    public GeneratedCode visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
-        GeneratedCode generatedCode = GeneratedCode.empty();
+    public GeneratedCode.GeneratedCodeBuilder visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
+        GeneratedCode.GeneratedCodeBuilder generatedCode = new GeneratedCode.GeneratedCodeBuilder();
 
         String identifier = variableDefinition.IDENTIFIER().getText();
         String variableCode = "";
@@ -84,9 +84,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
             variableCode = definition.toString();
         }
 
-        generatedCode.addVariableDefinition(variableCode);
-
-        return generatedCode;
+        return generatedCode.addVariableDefinition(variableCode);
     }
 
     private VariableDefinition createVariableDefinitionForConstant(String identifier,
@@ -107,21 +105,22 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode> {
     }
 
     @Override
-    protected GeneratedCode defaultResult() {
-        return GeneratedCode.empty();
+    protected GeneratedCode.GeneratedCodeBuilder defaultResult() {
+        return new GeneratedCode.GeneratedCodeBuilder();
     }
 
     @Override
-    protected GeneratedCode aggregateResult(GeneratedCode aggregate, GeneratedCode nextResult) {
+    protected GeneratedCode.GeneratedCodeBuilder aggregateResult(GeneratedCode.GeneratedCodeBuilder aggregate,
+                                                                 GeneratedCode.GeneratedCodeBuilder nextResult) {
         return aggregate.mergeWith(nextResult);
     }
 
     private static class VariableDefinition {
 
         private static final String INTEGER_CONSTANT_VAR_DEFINITION = "java.math.BigInteger %s = %s";
-        private static final String CHAR_CONSTANT_VAR_DEFINITION = "char %s = %s";
+        private static final String CHAR_CONSTANT_VAR_DEFINITION = "Character %s = %s";
         private static final String STRING_CONSTANT_VAR_DEFINITION = "String %s = %s";
-        private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "boolean %s = %s";
+        private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "Boolean %s = %s";
 
         private VariableType type;
         private String identifier;

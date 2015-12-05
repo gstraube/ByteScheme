@@ -41,10 +41,10 @@ public class CodeGenVisitorTest {
         List<String> expectedOutput = new ArrayList<>();
         expectedOutput.add("java.math.BigInteger var0 = new java.math.BigInteger(\"51\");");
         expectedOutput.add("String var1 = new String(\"a string\");");
-        expectedOutput.add("char var2 = new Character('λ');");
-        expectedOutput.add("char var3 = new Character('\\n');");
-        expectedOutput.add("boolean var4 = new Boolean(true);");
-        expectedOutput.add("boolean var5 = new Boolean(false);");
+        expectedOutput.add("Character var2 = new Character('λ');");
+        expectedOutput.add("Character var3 = new Character('\\n');");
+        expectedOutput.add("Boolean var4 = new Boolean(true);");
+        expectedOutput.add("Boolean var5 = new Boolean(false);");
 
         assertThat(generatedCode.getVariableDefinitions(), is(expectedOutput));
     }
@@ -74,7 +74,7 @@ public class CodeGenVisitorTest {
 
         ParseTree parseTree = parser.program();
         codeGenVisitor = new CodeGenVisitor();
-        return codeGenVisitor.visit(parseTree);
+        return codeGenVisitor.visit(parseTree).build();
     }
 
 }
