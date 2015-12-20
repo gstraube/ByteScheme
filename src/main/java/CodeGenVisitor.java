@@ -9,6 +9,32 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
 
     @Override
+    public GeneratedCode.GeneratedCodeBuilder visitApplication(SchemeParser.ApplicationContext application) {
+        GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+
+        if ("display".equals(application.IDENTIFIER().getText())) {
+            if (application.expression().size() == 1) {
+                SchemeParser.ExpressionContext argument = application.expression(0);
+
+                String outputArgument = "";
+                if (argument.constant() != null) {
+                    String constant = visitConstant(argument.constant()).getConstant(0);
+                    outputArgument = constant.substring(0, constant.length() - 1);
+
+                }
+                if (argument.IDENTIFIER() != null) {
+                    outputArgument = argument.IDENTIFIER().getText();
+                }
+                String mainMethodStatement = "System.out.println(OutputFormatter.output(%s));";
+                codeBuilder.addStatementsToMainMethod(String.format(mainMethodStatement,
+                        outputArgument));
+            }
+        }
+
+        return codeBuilder;
+    }
+
+    @Override
     public GeneratedCode.GeneratedCodeBuilder visitConstant(SchemeParser.ConstantContext constant) {
         GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
 
@@ -88,7 +114,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     }
 
     private VariableDefinition createVariableDefinitionForConstant(String identifier,
-                                                              SchemeParser.ConstantContext constant) {
+                                                                   SchemeParser.ConstantContext constant) {
         String text = visitConstant(constant).getConstant(0);
 
         if (constant.NUMBER() != null) {
@@ -117,10 +143,10 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
     private static class VariableDefinition {
 
-        private static final String INTEGER_CONSTANT_VAR_DEFINITION = "java.math.BigInteger %s = %s";
-        private static final String CHAR_CONSTANT_VAR_DEFINITION = "Character %s = %s";
-        private static final String STRING_CONSTANT_VAR_DEFINITION = "String %s = %s";
-        private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "Boolean %s = %s";
+        private static final String INTEGER_CONSTANT_VAR_DEFINITION = "static java.math.BigInteger %s = %s";
+        private static final String CHAR_CONSTANT_VAR_DEFINITION = "static Character %s = %s";
+        private static final String STRING_CONSTANT_VAR_DEFINITION = "static String %s = %s";
+        private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "static Boolean %s = %s";
 
         private VariableType type;
         private String identifier;

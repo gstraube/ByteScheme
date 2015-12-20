@@ -19,9 +19,9 @@ public class OutputFormatterTest {
 
     @Test
     public void characters_are_formatted_correctly() {
-        assertThat(output('a'), is("#\\a"));
-        assertThat(output('\n'), is("#\\newline"));
-        assertThat(output(' '), is("#\\space"));
+        assertThat(output('a'), is("a"));
+        assertThat(output('\n'), is("\n"));
+        assertThat(output(' '), is(" "));
     }
 
     @Test
@@ -42,7 +42,7 @@ public class OutputFormatterTest {
                 ListWrapper.fromElements('u', false), new BigInteger("2"),
                 "a_string");
 
-        assertThat(output(listWrapper), is("(15 (abc #t) 7 (#\\u #f) 2 a_string)"));
+        assertThat(output(listWrapper), is("(15 (abc #t) 7 (u #f) 2 a_string)"));
     }
 
 }

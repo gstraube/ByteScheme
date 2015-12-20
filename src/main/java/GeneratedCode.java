@@ -7,8 +7,6 @@ public class GeneratedCode {
 
     private List<String> methodsToBeDeclared = new ArrayList<>();
 
-    private List<String> methodsToBeCalled = new ArrayList<>();
-
     private List<String> constants = new ArrayList<>();
     private List<String> variableDefinitions = new ArrayList<>();
 
@@ -20,10 +18,6 @@ public class GeneratedCode {
 
     public List<String> getMethodsToBeDeclared() {
         return new ArrayList<>(methodsToBeDeclared);
-    }
-
-    public List<String> getMethodsToBeCalled() {
-        return new ArrayList<>(methodsToBeCalled);
     }
 
     public List<String> getVariableDefinitions() {
@@ -87,6 +81,9 @@ public class GeneratedCode {
 
             merged.methodsToBeDeclared.addAll(methodsToBeDeclared);
             merged.methodsToBeDeclared.addAll(other.methodsToBeDeclared);
+
+            merged.mainMethod.addAll(mainMethod);
+            merged.mainMethod.addAll(other.mainMethod);
 
             return merged;
         }

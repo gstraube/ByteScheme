@@ -39,12 +39,12 @@ public class CodeGenVisitorTest {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
         List<String> expectedOutput = new ArrayList<>();
-        expectedOutput.add("java.math.BigInteger var0 = new java.math.BigInteger(\"51\");");
-        expectedOutput.add("String var1 = new String(\"a string\");");
-        expectedOutput.add("Character var2 = new Character('λ');");
-        expectedOutput.add("Character var3 = new Character('\\n');");
-        expectedOutput.add("Boolean var4 = new Boolean(true);");
-        expectedOutput.add("Boolean var5 = new Boolean(false);");
+        expectedOutput.add("static java.math.BigInteger var0 = new java.math.BigInteger(\"51\");");
+        expectedOutput.add("static String var1 = new String(\"a string\");");
+        expectedOutput.add("static Character var2 = new Character('λ');");
+        expectedOutput.add("static Character var3 = new Character('\\n');");
+        expectedOutput.add("static Boolean var4 = new Boolean(true);");
+        expectedOutput.add("static Boolean var5 = new Boolean(false);");
 
         assertThat(generatedCode.getVariableDefinitions(), is(expectedOutput));
     }
@@ -56,9 +56,29 @@ public class CodeGenVisitorTest {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
         assertThat(generatedCode.getVariableDefinitions().get(0),
-                is("String var1 = new String(\"a string\");"));
+                is("static String var1 = new String(\"a string\");"));
         assertThat(generatedCode.getVariableDefinitions().get(1),
-                is("String var2 = var1;"));
+                is("static String var2 = var1;"));
+    }
+
+    @Test
+    public void an_application_of_the_display_procedure_results_in_an_output_statement_in_main_method() {
+        String input = "(display \"a string\")";
+        input += "(define var 14334234) (display var)";
+
+        GeneratedCode generatedCode = visitParseTreeForInput(input);
+
+        StringBuilder expectedOutput = new StringBuilder();
+        expectedOutput.append("public static void main(String[] args){");
+        expectedOutput.append("System.out.println(OutputFormatter.output(new String(\"a string\")));");
+        expectedOutput.append("System.out.println(OutputFormatter.output(var));");
+        expectedOutput.append("}");
+
+        assertThat(generatedCode.getVariableDefinitions().get(0),
+                is("static java.math.BigInteger var = new java.math.BigInteger(\"14334234\");"));
+
+        assertThat(generatedCode.getMethodsToBeDeclared().size(), is(1));
+        assertThat(generatedCode.getMethodsToBeDeclared().get(0), is(expectedOutput.toString()));
     }
 
     private GeneratedCode visitParseTreeForInput(String input) {

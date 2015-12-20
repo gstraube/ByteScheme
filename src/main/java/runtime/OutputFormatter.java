@@ -7,19 +7,12 @@ import java.util.List;
 
 public class OutputFormatter {
 
-    public static String output(boolean value) {
+    public static String output(Boolean value) {
         return value ? "#t" : "#f";
     }
 
-    public static String output(char character) {
-        switch (character) {
-            case '\n':
-                return "#\\newline";
-            case ' ':
-                return "#\\space";
-            default:
-                return String.format("#\\%c", character);
-        }
+    public static String output(Character character) {
+        return String.valueOf(character);
     }
 
     public static String output(String string) {
