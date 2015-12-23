@@ -8,17 +8,18 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import parser.ErrorListener;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.Attributes;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
 
 import static java.util.Arrays.stream;
 import static org.hamcrest.Matchers.is;
@@ -28,6 +29,9 @@ public class InterpreterTest {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
 
     CodeGenVisitor codeGenVisitor;
 
@@ -47,12 +51,13 @@ public class InterpreterTest {
 
     private ByteArrayOutputStream out = new ByteArrayOutputStream();
     private PrintStream systemOut = System.out;
+    private ClassPool pool;
 
     @Before
     public void setup() {
-        ClassPool pool = ClassPool.getDefault();
+        pool = ClassPool.getDefault();
         pool.importPackage("runtime");
-        mainClassCt = pool.makeClass(String.format("Main%d", classIndex.getAndIncrement()));
+        mainClassCt = pool.makeClass(String.format("Main%d", classIndex.get()));
 
         System.setOut(new PrintStream(out));
     }
@@ -67,9 +72,9 @@ public class InterpreterTest {
                 .collect(Collectors.joining("\n"));
         expectedOutput += "\n";
 
-        interpret(input);
+        String output = interpret(input);
 
-        assertThat(out.toString(), is(expectedOutput));
+        assertThat(output, is(expectedOutput));
     }
 
     @Test
@@ -84,9 +89,9 @@ public class InterpreterTest {
                 .collect(Collectors.joining("\n"));
         expectedOutput += "\n";
 
-        interpret(input);
+        String output = interpret(input);
 
-        assertThat(out.toString(), is(expectedOutput));
+        assertThat(output, is(expectedOutput));
     }
 
     @Test
@@ -116,10 +121,8 @@ public class InterpreterTest {
         System.setOut(systemOut);
     }
 
-    private List<String> interpret(String input) {
+    private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
-        Class<?> mainClass;
-        List<String> outputs = new ArrayList<>();
 
         try {
             mainClassCt.addConstructor(CtNewConstructor.defaultConstructor(mainClassCt));
@@ -134,19 +137,43 @@ public class InterpreterTest {
                 mainClassCt.addMethod(CtMethod.make(escapedMethod, mainClassCt));
             }
 
-            mainClass = mainClassCt.toClass();
+            Manifest manifest = new Manifest();
+            manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+            manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS,
+                    String.format("Main%d", classIndex.get()));
+            File file = folder.newFile("output.jar");
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            JarOutputStream jarOut = new JarOutputStream(fileOutputStream, manifest);
+            jarOut.putNextEntry(new ZipEntry(String.format("Main%d.class", classIndex.getAndIncrement())));
+            jarOut.write(mainClassCt.toBytecode());
+            jarOut.closeEntry();
+            jarOut.putNextEntry(new ZipEntry("runtime/OutputFormatter.class"));
+            jarOut.write(pool.get("runtime.OutputFormatter").toBytecode());
+            jarOut.closeEntry();
+            jarOut.close();
+            fileOutputStream.close();
 
-            String[] emptyArgs = new String[0];
-            mainClass.getMethod("main", emptyArgs.getClass()).invoke(null, (Object) emptyArgs);
+            ProcessBuilder processBuilder = new ProcessBuilder();
+            processBuilder.directory(folder.getRoot());
+            processBuilder.command("java", "-jar", "output.jar");
+            Process process = processBuilder.start();
 
-        } catch (CannotCompileException | IllegalAccessException |
-                NoSuchMethodException | InvocationTargetException e) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+                builder.append(System.getProperty("line.separator"));
+            }
+
+            return builder.toString();
+        } catch (CannotCompileException | IOException | NotFoundException e) {
             e.printStackTrace();
         }
 
         mainClassCt.defrost();
 
-        return outputs;
+        return "";
     }
 
     private GeneratedCode visitParseTreeForInput(String input) {
