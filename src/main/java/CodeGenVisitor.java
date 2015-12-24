@@ -1,7 +1,10 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCodeBuilder> {
 
@@ -29,6 +32,31 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 codeBuilder.addStatementsToMainMethod(String.format(mainMethodStatement,
                         outputArgument));
             }
+        } else if ("list".equals(application.IDENTIFIER().getText())) {
+            List<SchemeParser.ExpressionContext> expressions = application.expression();
+
+            Function<SchemeParser.ExpressionContext, String> expressionToCode = expression -> {
+                if (expression.constant() != null) {
+                    String constant = visitConstant(expression.constant()).getConstant(0);
+                    return constant.substring(0, constant.length() - 1);
+                }
+
+                if (expression.IDENTIFIER() != null) {
+                    return expression.IDENTIFIER().getText();
+                }
+
+                if (expression.application() != null) {
+                    return visitApplication(expression.application()).getConstant(0);
+                }
+
+                return "";
+            };
+
+            String listArguments = expressions.stream()
+                    .map(expressionToCode)
+                    .collect(Collectors.joining(","));
+
+            codeBuilder.addConstant(String.format("ListWrapper.fromElements(%s)", listArguments));
         }
 
         return codeBuilder;

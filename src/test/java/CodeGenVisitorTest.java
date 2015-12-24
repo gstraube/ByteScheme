@@ -5,6 +5,7 @@ import org.junit.Test;
 import parser.ErrorListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -68,17 +69,48 @@ public class CodeGenVisitorTest {
 
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
-        StringBuilder expectedOutput = new StringBuilder();
-        expectedOutput.append("public static void main(String[] args){");
-        expectedOutput.append("System.out.println(OutputFormatter.output(new String(\"a string\")));");
-        expectedOutput.append("System.out.println(OutputFormatter.output(var));");
-        expectedOutput.append("}");
-
         assertThat(generatedCode.getVariableDefinitions().get(0),
                 is("static java.math.BigInteger var = new java.math.BigInteger(\"14334234\");"));
 
         assertThat(generatedCode.getMethodsToBeDeclared().size(), is(1));
-        assertThat(generatedCode.getMethodsToBeDeclared().get(0), is(expectedOutput.toString()));
+        assertThat(generatedCode.getMethodsToBeDeclared().get(0), is("public static void main(String[] args){" +
+                "System.out.println(OutputFormatter.output(new String(\"a string\")));" +
+                "System.out.println(OutputFormatter.output(var));}"));
+    }
+
+    @Test
+    public void invoking_the_list_procedure_on_constants_yields_a_list_wrapper() {
+        String input = "(list 15 7 #\\u #f \"a string\")";
+
+        GeneratedCode generatedCode = visitParseTreeForInput(input);
+        String expectedOutput = "ListWrapper.fromElements(new java.math.BigInteger(\"15\")," +
+                "new java.math.BigInteger(\"7\"),new Character('u'),new Boolean(false),new String(\"a string\"))";
+
+        assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
+    }
+
+    @Test
+    public void previously_defined_variables_can_be_referenced_as_arguments_to_the_list_procedure() {
+        String input = "(define a_variable \"a string\") (list #\\u #f a_variable)";
+
+        GeneratedCode generatedCode = visitParseTreeForInput(input);
+        String expectedOutput = "ListWrapper.fromElements(new Character('u'),new Boolean(false)," +
+                "a_variable)";
+
+        assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
+    }
+
+    @Test
+    public void lists_can_be_nested() {
+        String input = "(list 15 (list \"abc\" #t) 7 (list #\\u #f) 2 \"a string\")";
+
+        GeneratedCode generatedCode = visitParseTreeForInput(input);
+        String expectedOutput = "ListWrapper.fromElements(new java.math.BigInteger(\"15\")," +
+                "ListWrapper.fromElements(new String(\"abc\"),new Boolean(true)),new java.math.BigInteger(\"7\")," +
+                "ListWrapper.fromElements(new Character('u'),new Boolean(false))," +
+                "new java.math.BigInteger(\"2\"),new String(\"a string\"))";
+
+        assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
     }
 
     private GeneratedCode visitParseTreeForInput(String input) {
