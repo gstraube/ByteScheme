@@ -125,48 +125,12 @@ public class InterpreterTest {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
         try {
-            mainClassCt.addConstructor(CtNewConstructor.defaultConstructor(mainClassCt));
+            createMainClassCt(generatedCode);
 
-            for (String variableDefinition : generatedCode.getVariableDefinitions()) {
-                String escapedDefinition = variableDefinition.replace("\n", "\\n");
-                mainClassCt.addField(CtField.make(escapedDefinition, mainClassCt));
-            }
+            String jarFileName = "output.jar";
+            createJarFile(jarFileName);
 
-            for (String method : generatedCode.getMethodsToBeDeclared()) {
-                String escapedMethod = method.replace("\n", "\\n");
-                mainClassCt.addMethod(CtMethod.make(escapedMethod, mainClassCt));
-            }
-
-            Manifest manifest = new Manifest();
-            manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-            manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS,
-                    String.format("Main%d", classIndex.get()));
-            File file = folder.newFile("output.jar");
-            FileOutputStream fileOutputStream = new FileOutputStream(file);
-            JarOutputStream jarOut = new JarOutputStream(fileOutputStream, manifest);
-            jarOut.putNextEntry(new ZipEntry(String.format("Main%d.class", classIndex.getAndIncrement())));
-            jarOut.write(mainClassCt.toBytecode());
-            jarOut.closeEntry();
-            jarOut.putNextEntry(new ZipEntry("runtime/OutputFormatter.class"));
-            jarOut.write(pool.get("runtime.OutputFormatter").toBytecode());
-            jarOut.closeEntry();
-            jarOut.close();
-            fileOutputStream.close();
-
-            ProcessBuilder processBuilder = new ProcessBuilder();
-            processBuilder.directory(folder.getRoot());
-            processBuilder.command("java", "-jar", "output.jar");
-            Process process = processBuilder.start();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            StringBuilder builder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-                builder.append(System.getProperty("line.separator"));
-            }
-
-            return builder.toString();
+            return runJarFile(jarFileName);
         } catch (CannotCompileException | IOException | NotFoundException e) {
             e.printStackTrace();
         }
@@ -174,6 +138,55 @@ public class InterpreterTest {
         mainClassCt.defrost();
 
         return "";
+    }
+
+    private void createMainClassCt(GeneratedCode generatedCode) throws CannotCompileException {
+        mainClassCt.addConstructor(CtNewConstructor.defaultConstructor(mainClassCt));
+
+        for (String variableDefinition : generatedCode.getVariableDefinitions()) {
+            String escapedDefinition = variableDefinition.replace("\n", "\\n");
+            mainClassCt.addField(CtField.make(escapedDefinition, mainClassCt));
+        }
+
+        for (String method : generatedCode.getMethodsToBeDeclared()) {
+            String escapedMethod = method.replace("\n", "\\n");
+            mainClassCt.addMethod(CtMethod.make(escapedMethod, mainClassCt));
+        }
+    }
+
+    private String runJarFile(String jarFileName) throws IOException {
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.directory(folder.getRoot());
+        processBuilder.command("java", "-jar", jarFileName);
+        Process process = processBuilder.start();
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        StringBuilder builder = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            builder.append(line);
+            builder.append(System.getProperty("line.separator"));
+        }
+
+        return builder.toString();
+    }
+
+    private void createJarFile(String jarFileName) throws IOException, CannotCompileException, NotFoundException {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS,
+                String.format("Main%d", classIndex.get()));
+        File file = folder.newFile(jarFileName);
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
+        JarOutputStream jarOut = new JarOutputStream(fileOutputStream, manifest);
+        jarOut.putNextEntry(new ZipEntry(String.format("Main%d.class", classIndex.getAndIncrement())));
+        jarOut.write(mainClassCt.toBytecode());
+        jarOut.closeEntry();
+        jarOut.putNextEntry(new ZipEntry("runtime/OutputFormatter.class"));
+        jarOut.write(pool.get("runtime.OutputFormatter").toBytecode());
+        jarOut.closeEntry();
+        jarOut.close();
+        fileOutputStream.close();
     }
 
     private GeneratedCode visitParseTreeForInput(String input) {
