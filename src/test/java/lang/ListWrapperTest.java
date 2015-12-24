@@ -4,8 +4,7 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 public class ListWrapperTest {
@@ -33,6 +32,26 @@ public class ListWrapperTest {
         assertThat(listWrapper1, is(listWrapper2));
         assertThat(listWrapper1, not(is(listWrapper3)));
         assertThat(listWrapper1, not(is(listWrapper4)));
+    }
+
+    @Test
+    public void lists_can_be_nested() {
+        ListWrapper listWrapper = ListWrapper.fromElements("a string",
+                ListWrapper.fromElements(new BigInteger("439533232"), "another string"), 'a');
+
+        Object element = listWrapper.cdr().car();
+
+        assertThat(element, instanceOf(ListWrapper.class));
+
+        ListWrapper innerList = (ListWrapper) element;
+
+        assertThat(innerList.car(), instanceOf(BigInteger.class));
+        assertThat(innerList.car(), is(new BigInteger("439533232")));
+
+        assertThat(innerList.cdr(), instanceOf(ListWrapper.class));
+
+        assertThat(innerList.cdr().car(), instanceOf(String.class));
+        assertThat(innerList.cdr().car(), is("another string"));
     }
 
 }
