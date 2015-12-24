@@ -3,7 +3,6 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,12 +44,9 @@ public class InterpreterTest {
             "λ", "\n", " ", "a string"
     };
 
-    private CtClass mainClassCt;
-
     private static AtomicInteger classIndex = new AtomicInteger(0);
 
-    private ByteArrayOutputStream out = new ByteArrayOutputStream();
-    private PrintStream systemOut = System.out;
+    private CtClass mainClassCt;
     private ClassPool pool;
 
     @Before
@@ -58,8 +54,6 @@ public class InterpreterTest {
         pool = ClassPool.getDefault();
         pool.importPackage("runtime");
         mainClassCt = pool.makeClass(String.format("Main%d", classIndex.get()));
-
-        System.setOut(new PrintStream(out));
     }
 
     @Test
@@ -114,11 +108,6 @@ public class InterpreterTest {
         expectedException.expectMessage("Undefined variable 'undefined_variable'");
 
         visitParseTreeForInput("(define a_variable undefined_variable)");
-    }
-
-    @After
-    public void tearDown() {
-        System.setOut(systemOut);
     }
 
     private String interpret(String input) {
