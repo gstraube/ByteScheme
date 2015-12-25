@@ -134,6 +134,30 @@ public class InterpreterTest {
         assertThat(interpret(input), is("(abc #t)\n"));
     }
 
+    @Test
+    public void integers_can_be_added() {
+        String input = "(display (+ 2 3 (+ 3 7) 6))";
+        assertThat(interpret(input), is("21\n"));
+    }
+
+    @Test
+    public void integers_can_be_subtracted() {
+        String input = "(display (- 10 (- 5 200) 375 (- 20)))";
+        assertThat(interpret(input), is("-150\n"));
+    }
+
+    @Test
+    public void integers_can_be_multiplied() {
+        String input = "(display (* 2 10 (* 3 7)))";
+        assertThat(interpret(input), is("420\n"));
+    }
+
+    @Test
+    public void integers_can_be_divided() {
+        String input = "(display (quotient 10 (quotient 7 3)))";
+        assertThat(interpret(input), is("5\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 

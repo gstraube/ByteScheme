@@ -90,6 +90,43 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             return codeBuilder;
         });
+
+        procedureMap.put("+", createChainedProcedure("add"));
+        procedureMap.put("-", createChainedProcedure("subtract", "negate"));
+        procedureMap.put("*", createChainedProcedure("multiply"));
+        procedureMap.put("quotient", createChainedProcedure("divide"));
+    }
+
+    private CodeGenProcedure createChainedProcedure(String procedureName, String singleArgumentProcedure) {
+        return expressions -> {
+            if (expressions.size() == 1) {
+                GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+                generatedCodeBuilder.addConstant(String.format("%s.%s()",
+                        expressionToCode.apply(expressions.get(0)), singleArgumentProcedure));
+
+                return generatedCodeBuilder;
+            }
+
+            return chainMethodCalls(procedureName, expressions);
+        };
+    }
+
+    private CodeGenProcedure createChainedProcedure(String procedureName) {
+        return expressions -> chainMethodCalls(procedureName, expressions);
+    }
+
+    private GeneratedCode.GeneratedCodeBuilder chainMethodCalls(String procedureName,
+                                                                List<SchemeParser.ExpressionContext> expressions) {
+        GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+
+        String constant = expressionToCode.apply(expressions.get(0));
+        for (int current = 1; current < expressions.size(); current++) {
+            constant += String.format(".%s(%s)", procedureName, expressionToCode.apply(expressions.get(current)));
+        }
+
+        generatedCodeBuilder.addConstant(constant);
+
+        return generatedCodeBuilder;
     }
 
     @Override

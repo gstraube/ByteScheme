@@ -1,6 +1,7 @@
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import parser.ErrorListener;
 
@@ -111,6 +112,31 @@ public class CodeGenVisitorTest {
                 "new java.math.BigInteger(\"2\"),new String(\"a string\")})";
 
         assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
+    }
+
+    @Test
+    public void predefined_procedures_can_be_called() {
+        String input = "(+ 2 3 (+ 3 7) 6)";
+        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+                Matchers.is("new java.math.BigInteger(\"2\").add(new java.math.BigInteger(\"3\"))" +
+                        ".add(new java.math.BigInteger(\"3\").add(new java.math.BigInteger(\"7\")))" +
+                        ".add(new java.math.BigInteger(\"6\"))"));
+
+
+        input = "(- 10 (- 5 200) 375 (- 20))";
+        assertThat(visitParseTreeForInput(input).getConstants().get(0), Matchers.is("new java.math.BigInteger(\"10\").subtract(new java.math.BigInteger(\"5\")" +
+                ".subtract(new java.math.BigInteger(\"200\"))).subtract(new java.math.BigInteger(\"375\"))" +
+                ".subtract(new java.math.BigInteger(\"20\").negate())"));
+
+        input = "(* 2 10 (* 3 7))";
+        assertThat(visitParseTreeForInput(input).getConstants().get(0), Matchers.is("new java.math.BigInteger(\"2\")" +
+                ".multiply(new java.math.BigInteger(\"10\")).multiply(new java.math.BigInteger(\"3\")" +
+                ".multiply(new java.math.BigInteger(\"7\")))"));
+
+
+        input = "(quotient 10 (quotient 7 3))";
+        assertThat(visitParseTreeForInput(input).getConstants().get(0), Matchers.is("new java.math.BigInteger(\"10\")" +
+                ".divide(new java.math.BigInteger(\"7\").divide(new java.math.BigInteger(\"3\")))"));
     }
 
     private GeneratedCode visitParseTreeForInput(String input) {
