@@ -12,7 +12,7 @@ public class ListWrapper {
         this.elements = elements;
     }
 
-    public static ListWrapper fromElements(Object... elements) {
+    public static ListWrapper fromElements(Object[] elements) {
         return new ListWrapper(Arrays.asList(elements));
     }
 
