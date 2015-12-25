@@ -37,7 +37,8 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     public GeneratedCode.GeneratedCodeBuilder visitApplication(SchemeParser.ApplicationContext application) {
         GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
 
-        if (DISPLAY_PROCEDURE_NAME.equals(application.IDENTIFIER().getText())) {
+        String identifier = application.IDENTIFIER().getText();
+        if (DISPLAY_PROCEDURE_NAME.equals(identifier)) {
             if (application.expression().size() == 1) {
                 SchemeParser.ExpressionContext argument = application.expression(0);
 
@@ -45,7 +46,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 codeBuilder.addStatementsToMainMethod(String.format(mainMethodStatement,
                         expressionToCode.apply(argument)));
             }
-        } else if (LIST_PROCEDURE_NAME.equals(application.IDENTIFIER().getText())) {
+        } else if (LIST_PROCEDURE_NAME.equals(identifier)) {
             List<SchemeParser.ExpressionContext> expressions = application.expression();
 
             String listArguments = expressions.stream()
@@ -53,8 +54,8 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                     .collect(Collectors.joining(","));
 
             codeBuilder.addConstant(String.format("ListWrapper.fromElements(new Object[]{%s})", listArguments));
-        } else if (CAR_PROCEDURE_NAME.equals(application.IDENTIFIER().getText()) ||
-                CDR_PROCEDURE_NAME.equals(application.IDENTIFIER().getText())) {
+        } else if (CAR_PROCEDURE_NAME.equals(identifier) ||
+                CDR_PROCEDURE_NAME.equals(identifier)) {
             if (application.expression().size() == 1) {
                 if (application.expression(0).application() != null) {
                     String list = visitApplication(application.expression(0).application()).getConstant(0);
