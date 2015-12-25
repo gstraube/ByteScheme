@@ -15,8 +15,9 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     private static final String CAR_PROCEDURE_NAME = "car";
     private static final String CDR_PROCEDURE_NAME = "cdr";
 
-    private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
-    private Function<SchemeParser.ExpressionContext, String> expressionToCode = expression -> {
+    private final Map<String, CodeGenProcedure> procedureMap = new HashMap<>();
+
+    private final Function<SchemeParser.ExpressionContext, String> expressionToCode = expression -> {
         if (expression.constant() != null) {
             String constant = visitConstant(expression.constant()).getConstant(0);
             return constant.substring(0, constant.length() - 1);
@@ -33,39 +34,75 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         return "";
     };
 
-    @Override
-    public GeneratedCode.GeneratedCodeBuilder visitApplication(SchemeParser.ApplicationContext application) {
-        GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+    private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
 
-        String identifier = application.IDENTIFIER().getText();
-        if (DISPLAY_PROCEDURE_NAME.equals(identifier)) {
-            if (application.expression().size() == 1) {
-                SchemeParser.ExpressionContext argument = application.expression(0);
+    public CodeGenVisitor() {
+        procedureMap.put(DISPLAY_PROCEDURE_NAME, expressions -> {
+            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+
+            if (expressions.size() == 1) {
+                SchemeParser.ExpressionContext argument = expressions.get(0);
 
                 String mainMethodStatement = "System.out.println(OutputFormatter.output(%s));";
                 codeBuilder.addStatementsToMainMethod(String.format(mainMethodStatement,
                         expressionToCode.apply(argument)));
             }
-        } else if (LIST_PROCEDURE_NAME.equals(identifier)) {
-            List<SchemeParser.ExpressionContext> expressions = application.expression();
+
+            return codeBuilder;
+        });
+
+        procedureMap.put(LIST_PROCEDURE_NAME, expressions -> {
+            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
 
             String listArguments = expressions.stream()
                     .map(expressionToCode)
                     .collect(Collectors.joining(","));
 
             codeBuilder.addConstant(String.format("ListWrapper.fromElements(new Object[]{%s})", listArguments));
-        } else if (CAR_PROCEDURE_NAME.equals(identifier) ||
-                CDR_PROCEDURE_NAME.equals(identifier)) {
-            if (application.expression().size() == 1) {
-                if (application.expression(0).application() != null) {
-                    String list = visitApplication(application.expression(0).application()).getConstant(0);
 
-                    codeBuilder.addConstant(String.format("%s.%s()", list, application.IDENTIFIER()));
+            return codeBuilder;
+        });
+
+        procedureMap.put(CAR_PROCEDURE_NAME, expressions -> {
+            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+
+            if (expressions.size() == 1) {
+                if (expressions.get(0).application() != null) {
+                    String list = visitApplication(expressions.get(0).application()).getConstant(0);
+
+                    codeBuilder.addConstant(String.format("%s.car()", list));
                 }
             }
+
+            return codeBuilder;
+        });
+
+        procedureMap.put(CDR_PROCEDURE_NAME, expressions -> {
+            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+
+            if (expressions.size() == 1) {
+                if (expressions.get(0).application() != null) {
+                    String list = visitApplication(expressions.get(0).application()).getConstant(0);
+
+                    codeBuilder.addConstant(String.format("%s.cdr()", list));
+                }
+            }
+
+            return codeBuilder;
+        });
+    }
+
+    @Override
+    public GeneratedCode.GeneratedCodeBuilder visitApplication(SchemeParser.ApplicationContext application) {
+        String identifier = application.IDENTIFIER().getText();
+
+        if (procedureMap.containsKey(identifier)) {
+            CodeGenProcedure codeGenProcedure = procedureMap.get(identifier);
+
+            return codeGenProcedure.generateCode(application.expression());
         }
 
-        return codeBuilder;
+        return new GeneratedCode.GeneratedCodeBuilder();
     }
 
     @Override
@@ -244,6 +281,10 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         private enum VariableType {
             BIG_INTEGER, CHAR, STRING, BOOLEAN
         }
+    }
+
+    interface CodeGenProcedure {
+        GeneratedCode.GeneratedCodeBuilder generateCode(List<SchemeParser.ExpressionContext> expression);
     }
 
 }
