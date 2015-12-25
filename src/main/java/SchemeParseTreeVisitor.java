@@ -210,23 +210,6 @@ public class SchemeParseTreeVisitor extends SchemeBaseVisitor<List<String>> {
         throw new ParseCancellationException(String.format("Undefined variable '%s'", variableIdentifier));
     }
 
-    private List<Datum> collectElements(List<SchemeParser.DatumContext> data) {
-        List<Datum> elements = new ArrayList<>();
-        for (SchemeParser.DatumContext datum : data) {
-            if (datum.list() != null) {
-                elements.add(new SList(collectElements(datum.list().datum())));
-            }
-            if (datum.constant() != null) {
-                elements.add(extractConstant(datum.constant()));
-            }
-            if (datum.IDENTIFIER() != null) {
-                String value = datum.IDENTIFIER().getText();
-                elements.add(new Constant<>(value, value));
-            }
-        }
-        return elements;
-    }
-
     private Constant extractConstant(SchemeParser.ConstantContext constant) {
         if (constant.NUMBER() != null) {
             String text = constant.NUMBER().getText();
