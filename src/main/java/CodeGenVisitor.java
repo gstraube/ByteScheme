@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCodeBuilder> {
 
     private static final String UNDEFINED_VARIABLE_EXCEPTION_MESSAGE = "Undefined variable '%s'";
+    private static final String DISPLAY_PROCEDURE_NAME = "display";
+    private static final String LIST_PROCEDURE_NAME = "list";
 
     private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
     private Function<SchemeParser.ExpressionContext, String> expressionToCode = expression -> {
@@ -32,7 +34,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     public GeneratedCode.GeneratedCodeBuilder visitApplication(SchemeParser.ApplicationContext application) {
         GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
 
-        if ("display".equals(application.IDENTIFIER().getText())) {
+        if (DISPLAY_PROCEDURE_NAME.equals(application.IDENTIFIER().getText())) {
             if (application.expression().size() == 1) {
                 SchemeParser.ExpressionContext argument = application.expression(0);
 
@@ -40,7 +42,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 codeBuilder.addStatementsToMainMethod(String.format(mainMethodStatement,
                         expressionToCode.apply(argument)));
             }
-        } else if ("list".equals(application.IDENTIFIER().getText())) {
+        } else if (LIST_PROCEDURE_NAME.equals(application.IDENTIFIER().getText())) {
             List<SchemeParser.ExpressionContext> expressions = application.expression();
 
             String listArguments = expressions.stream()
