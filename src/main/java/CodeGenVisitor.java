@@ -9,8 +9,11 @@ import java.util.stream.Collectors;
 public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCodeBuilder> {
 
     private static final String UNDEFINED_VARIABLE_EXCEPTION_MESSAGE = "Undefined variable '%s'";
+
     private static final String DISPLAY_PROCEDURE_NAME = "display";
     private static final String LIST_PROCEDURE_NAME = "list";
+    private static final String CAR_PROCEDURE_NAME = "car";
+    private static final String CDR_PROCEDURE_NAME = "cdr";
 
     private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
     private Function<SchemeParser.ExpressionContext, String> expressionToCode = expression -> {
@@ -50,6 +53,15 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                     .collect(Collectors.joining(","));
 
             codeBuilder.addConstant(String.format("ListWrapper.fromElements(new Object[]{%s})", listArguments));
+        } else if (CAR_PROCEDURE_NAME.equals(application.IDENTIFIER().getText()) ||
+                CDR_PROCEDURE_NAME.equals(application.IDENTIFIER().getText())) {
+            if (application.expression().size() == 1) {
+                if (application.expression(0).application() != null) {
+                    String list = visitApplication(application.expression(0).application()).getConstant(0);
+
+                    codeBuilder.addConstant(String.format("%s.%s()", list, application.IDENTIFIER()));
+                }
+            }
         }
 
         return codeBuilder;
@@ -174,6 +186,12 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         private String value;
         private boolean needsSemicolon = false;
 
+        private VariableDefinition(VariableType type, String identifier, String value) {
+            this.type = type;
+            this.identifier = identifier;
+            this.value = value;
+        }
+
         public static VariableDefinition createForBigInteger(String identifier, String value) {
             return new VariableDefinition(VariableType.BIG_INTEGER, identifier, value);
         }
@@ -213,12 +231,6 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             String definitionStatement = String.format(template, identifier, value);
             return needsSemicolon ? definitionStatement.concat(";") : definitionStatement;
-        }
-
-        private VariableDefinition(VariableType type, String identifier, String value) {
-            this.type = type;
-            this.identifier = identifier;
-            this.value = value;
         }
 
         public VariableDefinition referencedBy(String identifier) {

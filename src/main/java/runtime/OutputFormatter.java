@@ -23,6 +23,22 @@ public class OutputFormatter {
         return String.valueOf(bigInteger);
     }
 
+    public static String output(Object object) {
+        if (object instanceof Boolean) {
+            return output((boolean) object);
+        } else if (object instanceof Character) {
+            return output((char) object);
+        } else if (object instanceof String) {
+            return output((String) object);
+        } else if (object instanceof BigInteger) {
+            return output((BigInteger) object);
+        } else if (object instanceof ListWrapper) {
+            return output((ListWrapper) object);
+        }
+
+        return "";
+    }
+
     public static String output(ListWrapper listWrapper) {
         StringBuilder output = new StringBuilder();
 
@@ -30,17 +46,7 @@ public class OutputFormatter {
         List<Object> elements = listWrapper.getElements();
         for (int i = 0; i < elements.size(); i++) {
             Object element = elements.get(i);
-            if (element instanceof Boolean) {
-                output.append(output((boolean) element));
-            } else if (element instanceof Character) {
-                output.append(output((char) element));
-            } else if (element instanceof String) {
-                output.append(output((String) element));
-            } else if (element instanceof BigInteger) {
-                output.append(output((BigInteger) element));
-            } else if (element instanceof ListWrapper) {
-                output.append(output((ListWrapper) element));
-            }
+            output.append(output(element));
 
             if (i < elements.size() - 1) {
                 output.append(" ");

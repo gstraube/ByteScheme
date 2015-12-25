@@ -120,6 +120,20 @@ public class InterpreterTest {
         assertThat(output, is("(15 (abc #t) 7 (u #f) 2 a string)\n"));
     }
 
+    @Test
+    public void car_returns_the_head_of_the_list() throws Exception {
+        String input = "(display (car (list 1 \"abc\" #t)))";
+
+        assertThat(interpret(input), is("1\n"));
+    }
+
+    @Test
+    public void cdr_returns_all_but_the_head_of_the_list() throws Exception {
+        String input = "(display (cdr (list 1 \"abc\" #t)))";
+
+        assertThat(interpret(input), is("(abc #t)\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
