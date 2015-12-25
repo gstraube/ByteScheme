@@ -9,7 +9,24 @@ import java.util.stream.Collectors;
 public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCodeBuilder> {
 
     private static final String UNDEFINED_VARIABLE_EXCEPTION_MESSAGE = "Undefined variable '%s'";
+
     private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
+    private Function<SchemeParser.ExpressionContext, String> expressionToCode = expression -> {
+        if (expression.constant() != null) {
+            String constant = visitConstant(expression.constant()).getConstant(0);
+            return constant.substring(0, constant.length() - 1);
+        }
+
+        if (expression.IDENTIFIER() != null) {
+            return expression.IDENTIFIER().getText();
+        }
+
+        if (expression.application() != null) {
+            return visitApplication(expression.application()).getConstant(0);
+        }
+
+        return "";
+    };
 
     @Override
     public GeneratedCode.GeneratedCodeBuilder visitApplication(SchemeParser.ApplicationContext application) {
@@ -19,42 +36,12 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             if (application.expression().size() == 1) {
                 SchemeParser.ExpressionContext argument = application.expression(0);
 
-                String outputArgument = "";
-
-                if (argument.constant() != null) {
-                    String constant = visitConstant(argument.constant()).getConstant(0);
-                    outputArgument = constant.substring(0, constant.length() - 1);
-                }
-                if (argument.IDENTIFIER() != null) {
-                    outputArgument = argument.IDENTIFIER().getText();
-                }
-                if (argument.application() != null) {
-                    outputArgument = visitApplication(argument.application()).getConstant(0);
-                }
-
                 String mainMethodStatement = "System.out.println(OutputFormatter.output(%s));";
                 codeBuilder.addStatementsToMainMethod(String.format(mainMethodStatement,
-                        outputArgument));
+                        expressionToCode.apply(argument)));
             }
         } else if ("list".equals(application.IDENTIFIER().getText())) {
             List<SchemeParser.ExpressionContext> expressions = application.expression();
-
-            Function<SchemeParser.ExpressionContext, String> expressionToCode = expression -> {
-                if (expression.constant() != null) {
-                    String constant = visitConstant(expression.constant()).getConstant(0);
-                    return constant.substring(0, constant.length() - 1);
-                }
-
-                if (expression.IDENTIFIER() != null) {
-                    return expression.IDENTIFIER().getText();
-                }
-
-                if (expression.application() != null) {
-                    return visitApplication(expression.application()).getConstant(0);
-                }
-
-                return "";
-            };
 
             String listArguments = expressions.stream()
                     .map(expressionToCode)
