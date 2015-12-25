@@ -53,6 +53,7 @@ public class InterpreterTest {
     public void setup() {
         pool = ClassPool.getDefault();
         pool.importPackage("runtime");
+        pool.importPackage("lang");
         mainClassCt = pool.makeClass(String.format("Main%d", classIndex.get()));
     }
 
@@ -108,6 +109,15 @@ public class InterpreterTest {
         expectedException.expectMessage("Undefined variable 'undefined_variable'");
 
         visitParseTreeForInput("(define a_variable undefined_variable)");
+    }
+
+    @Test
+    public void a_list_is_outputted_correctly() {
+        String input = "(display (list 15 (list \"abc\" #t) 7 (list #\\u #f) 2 \"a string\"))";
+
+        String output = interpret(input);
+
+        assertThat(output, is("(15 (abc #t) 7 (u #f) 2 a string)\n"));
     }
 
     private String interpret(String input) {
@@ -173,6 +183,9 @@ public class InterpreterTest {
         jarOut.closeEntry();
         jarOut.putNextEntry(new ZipEntry("runtime/OutputFormatter.class"));
         jarOut.write(pool.get("runtime.OutputFormatter").toBytecode());
+        jarOut.closeEntry();
+        jarOut.putNextEntry(new ZipEntry("lang/ListWrapper.class"));
+        jarOut.write(pool.get("lang.ListWrapper").toBytecode());
         jarOut.closeEntry();
         jarOut.close();
         fileOutputStream.close();

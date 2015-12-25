@@ -20,14 +20,18 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 SchemeParser.ExpressionContext argument = application.expression(0);
 
                 String outputArgument = "";
+
                 if (argument.constant() != null) {
                     String constant = visitConstant(argument.constant()).getConstant(0);
                     outputArgument = constant.substring(0, constant.length() - 1);
-
                 }
                 if (argument.IDENTIFIER() != null) {
                     outputArgument = argument.IDENTIFIER().getText();
                 }
+                if (argument.application() != null) {
+                    outputArgument = visitApplication(argument.application()).getConstant(0);
+                }
+
                 String mainMethodStatement = "System.out.println(OutputFormatter.output(%s));";
                 codeBuilder.addStatementsToMainMethod(String.format(mainMethodStatement,
                         outputArgument));
@@ -56,7 +60,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                     .map(expressionToCode)
                     .collect(Collectors.joining(","));
 
-            codeBuilder.addConstant(String.format("ListWrapper.fromElements(%s)", listArguments));
+            codeBuilder.addConstant(String.format("ListWrapper.fromElements(new Object[]{%s})", listArguments));
         }
 
         return codeBuilder;

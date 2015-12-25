@@ -83,8 +83,8 @@ public class CodeGenVisitorTest {
         String input = "(list 15 7 #\\u #f \"a string\")";
 
         GeneratedCode generatedCode = visitParseTreeForInput(input);
-        String expectedOutput = "ListWrapper.fromElements(new java.math.BigInteger(\"15\")," +
-                "new java.math.BigInteger(\"7\"),new Character('u'),new Boolean(false),new String(\"a string\"))";
+        String expectedOutput = "ListWrapper.fromElements(new Object[]{new java.math.BigInteger(\"15\")," +
+                "new java.math.BigInteger(\"7\"),new Character('u'),new Boolean(false),new String(\"a string\")})";
 
         assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
     }
@@ -94,8 +94,8 @@ public class CodeGenVisitorTest {
         String input = "(define a_variable \"a string\") (list #\\u #f a_variable)";
 
         GeneratedCode generatedCode = visitParseTreeForInput(input);
-        String expectedOutput = "ListWrapper.fromElements(new Character('u'),new Boolean(false)," +
-                "a_variable)";
+        String expectedOutput = "ListWrapper.fromElements(new Object[]{new Character('u'),new Boolean(false)," +
+                "a_variable})";
 
         assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
     }
@@ -105,10 +105,10 @@ public class CodeGenVisitorTest {
         String input = "(list 15 (list \"abc\" #t) 7 (list #\\u #f) 2 \"a string\")";
 
         GeneratedCode generatedCode = visitParseTreeForInput(input);
-        String expectedOutput = "ListWrapper.fromElements(new java.math.BigInteger(\"15\")," +
-                "ListWrapper.fromElements(new String(\"abc\"),new Boolean(true)),new java.math.BigInteger(\"7\")," +
-                "ListWrapper.fromElements(new Character('u'),new Boolean(false))," +
-                "new java.math.BigInteger(\"2\"),new String(\"a string\"))";
+        String expectedOutput = "ListWrapper.fromElements(new Object[]{new java.math.BigInteger(\"15\")," +
+                "ListWrapper.fromElements(new Object[]{new String(\"abc\"),new Boolean(true)}),new java.math.BigInteger(\"7\")," +
+                "ListWrapper.fromElements(new Object[]{new Character('u'),new Boolean(false)})," +
+                "new java.math.BigInteger(\"2\"),new String(\"a string\")})";
 
         assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
     }
