@@ -188,6 +188,32 @@ public class InterpreterTest {
         assertThat(interpret(input), is(expectedOutput));
     }
 
+    @Test
+    public void equal_returns_false_when_types_do_not_match() throws Exception {
+        String input = "(display (equal? 42 \"forty-two\"))";
+        input += "(display (equal? (list 1 2 3) #t))";
+        assertThat(interpret(input), is("#f\n#f\n"));
+    }
+
+    @Test
+    public void equal_returns_true_for_constants_with_matching_values_and_false_otherwise() {
+        String input = "(display (equal? 42 42))";
+        input += "(display (equal? #\\a #\\a))";
+        input += "(display (equal? \"a string\" \"a different string\"))";
+        input += "(display (equal? #t #f))";
+        assertThat(interpret(input), is("#t\n#t\n#f\n#f\n"));
+    }
+
+    @Test
+    public void equal_returns_true_for_two_lists_containing_the_same_elements_and_false_otherwise() throws Exception {
+        String input =
+                "(display (equal? (list 1 \"foo\" 2 (list #t 4) (list 5 6)) (list 1 \"foo\" 2 (list #t 4) (list 5 6))))";
+        input += "(display (equal? (list 1 2 3) (list 4 5)))";
+        input += "(display (equal? (list 1 2 3) (list)))";
+        input += "(display (equal? (list 1 2 3) (list 1 2 #t)))";
+        assertThat(interpret(input), is("#t\n#f\n#f\n#f\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 

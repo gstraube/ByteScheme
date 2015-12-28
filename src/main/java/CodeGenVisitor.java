@@ -80,6 +80,19 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         procedureMap.put("<=", createComparisonProcedure(LESS_THAN, EQUAL));
         procedureMap.put(">", createComparisonProcedure(GREATER_THAN));
         procedureMap.put(">=", createComparisonProcedure(GREATER_THAN, EQUAL));
+
+        procedureMap.put("equal?", expressions -> {
+            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+
+            if (expressions.size() == 2) {
+                String firstArgument = expressionToCode.apply(expressions.get(0));
+                String secondArgument = expressionToCode.apply(expressions.get(1));
+
+                codeBuilder.addConstant(String.format("new Boolean(java.util.Objects.equals(%s,%s))", firstArgument, secondArgument));
+            }
+
+            return codeBuilder;
+        });
     }
 
     private CodeGenProcedure createListProcedure(String procedureName) {

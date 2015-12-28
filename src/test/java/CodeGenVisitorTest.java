@@ -145,6 +145,14 @@ public class CodeGenVisitorTest {
                 is("ListWrapper.fromElements(new Object[0])"));
     }
 
+    @Test
+    public void the_equal_procedure_is_implemented_by_the_equals_method_defined_in_the_Objects_class() {
+        String input = "(equal? 42 \"forty-two\")";
+        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+                Matchers.is("new Boolean(java.util.Objects.equals(new java.math.BigInteger(\"42\")," +
+                        "new String(\"forty-two\")))"));
+    }
+
     private GeneratedCode visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
