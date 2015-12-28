@@ -64,33 +64,8 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             return codeBuilder;
         });
 
-        procedureMap.put(CAR_PROCEDURE_NAME, expressions -> {
-            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-
-            if (expressions.size() == 1) {
-                if (expressions.get(0).application() != null) {
-                    String list = visitApplication(expressions.get(0).application()).getConstant(0);
-
-                    codeBuilder.addConstant(String.format("%s.car()", list));
-                }
-            }
-
-            return codeBuilder;
-        });
-
-        procedureMap.put(CDR_PROCEDURE_NAME, expressions -> {
-            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-
-            if (expressions.size() == 1) {
-                if (expressions.get(0).application() != null) {
-                    String list = visitApplication(expressions.get(0).application()).getConstant(0);
-
-                    codeBuilder.addConstant(String.format("%s.cdr()", list));
-                }
-            }
-
-            return codeBuilder;
-        });
+        procedureMap.put(CAR_PROCEDURE_NAME, createListProcedure("car"));
+        procedureMap.put(CDR_PROCEDURE_NAME, createListProcedure("cdr"));
 
         procedureMap.put("+", createChainedProcedure("add"));
         procedureMap.put("-", createChainedProcedure("subtract", "negate"));
@@ -100,6 +75,22 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         procedureMap.put("<=", createComparisonProcedure(LESS_THAN, EQUAL));
         procedureMap.put(">", createComparisonProcedure(GREATER_THAN));
         procedureMap.put(">=", createComparisonProcedure(GREATER_THAN, EQUAL));
+    }
+
+    private CodeGenProcedure createListProcedure(String procedureName) {
+        return expressions -> {
+            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+
+            if (expressions.size() == 1) {
+                if (expressions.get(0).application() != null) {
+                    String list = visitApplication(expressions.get(0).application()).getConstant(0);
+
+                    codeBuilder.addConstant(String.format("%s.%s()", list, procedureName));
+                }
+            }
+
+            return codeBuilder;
+        };
     }
 
     private CodeGenProcedure createComparisonProcedure(Integer... expectedResults) {
