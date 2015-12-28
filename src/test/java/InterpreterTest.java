@@ -11,6 +11,8 @@ import org.junit.rules.TemporaryFolder;
 import parser.ErrorListener;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
@@ -156,6 +158,35 @@ public class InterpreterTest {
     public void integers_can_be_divided() {
         String input = "(display (quotient 10 (quotient 7 3)))";
         assertThat(interpret(input), is("5\n"));
+    }
+
+    @Test
+    public void comparison_operators_are_evaluated_correctly() throws Exception {
+        Map<String, String> expectedResults = new HashMap() {{
+            put("(display (< 5 10 20 30))", "#t");
+            put("(display (< 10 5))", "#f");
+            put("(display (< 10 10))", "#f");
+            put("(display (> 10 5 1))", "#t");
+            put("(display (> 5 10))", "#f");
+            put("(display (> 10 10))", "#f");
+            put("(display (<= 5 10 10 100))", "#t");
+            put("(display (<= 10 5))", "#f");
+            put("(display (<= 10 10))", "#t");
+            put("(display (>= 5 5 2 1))", "#t");
+            put("(display (>= 5 10))", "#f");
+            put("(display (>= 10 10))", "#t");
+
+        }};
+
+        String input = "";
+        String expectedOutput = "";
+        for (String key : expectedResults.keySet()) {
+            input += key;
+            expectedOutput += expectedResults.get(key) + "\n";
+        }
+
+        System.out.println(input);
+        assertThat(interpret(input), is(expectedOutput));
     }
 
     private String interpret(String input) {

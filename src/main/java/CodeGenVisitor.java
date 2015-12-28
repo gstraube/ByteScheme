@@ -1,8 +1,6 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -14,6 +12,9 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     private static final String LIST_PROCEDURE_NAME = "list";
     private static final String CAR_PROCEDURE_NAME = "car";
     private static final String CDR_PROCEDURE_NAME = "cdr";
+    private static final int LESS_THAN = -1;
+    private static final int EQUAL = 0;
+    private static final int GREATER_THAN = 1;
 
     private final Map<String, CodeGenProcedure> procedureMap = new HashMap<>();
 
@@ -95,6 +96,39 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         procedureMap.put("-", createChainedProcedure("subtract", "negate"));
         procedureMap.put("*", createChainedProcedure("multiply"));
         procedureMap.put("quotient", createChainedProcedure("divide"));
+        procedureMap.put("<", createComparisonProcedure(LESS_THAN));
+        procedureMap.put("<=", createComparisonProcedure(LESS_THAN, EQUAL));
+        procedureMap.put(">", createComparisonProcedure(GREATER_THAN));
+        procedureMap.put(">=", createComparisonProcedure(GREATER_THAN, EQUAL));
+    }
+
+    private CodeGenProcedure createComparisonProcedure(Integer... expectedResults) {
+        return expressions -> {
+            GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+            List<Integer> results = Arrays.asList(expectedResults);
+            List<String> comparisons = new ArrayList<>();
+
+            for (int current = 0; current < expressions.size() - 1; current++) {
+                int next = current + 1;
+                String compareTo = String.format("%s.compareTo(%s)", expressionToCode.apply(expressions.get(current)),
+                        expressionToCode.apply(expressions.get(next)));
+
+                String comparison = results
+                        .stream()
+                        .map(expectedResult -> String.format("%s == %d", compareTo, expectedResult))
+                        .collect(Collectors.joining("||", "(", ")"));
+
+                comparisons.add(comparison);
+            }
+
+            String completeComparison = comparisons
+                    .stream()
+                    .collect(Collectors.joining("&&", "new Boolean(", ")"));
+
+            generatedCodeBuilder.addConstant(completeComparison);
+
+            return generatedCodeBuilder;
+        };
     }
 
     private CodeGenProcedure createChainedProcedure(String procedureName, String singleArgumentProcedure) {
