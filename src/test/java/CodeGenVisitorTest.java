@@ -139,6 +139,12 @@ public class CodeGenVisitorTest {
                 ".divide(new java.math.BigInteger(\"7\").divide(new java.math.BigInteger(\"3\")))"));
     }
 
+    @Test
+    public void an_empty_list_can_be_created() {
+        assertThat(visitParseTreeForInput("(list)").getConstants().get(0),
+                is("ListWrapper.fromElements(new Object[0])"));
+    }
+
     private GeneratedCode visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

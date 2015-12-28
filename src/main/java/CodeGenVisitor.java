@@ -55,11 +55,16 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         procedureMap.put(LIST_PROCEDURE_NAME, expressions -> {
             GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
 
-            String listArguments = expressions.stream()
-                    .map(expressionToCode)
-                    .collect(Collectors.joining(","));
-
-            codeBuilder.addConstant(String.format("ListWrapper.fromElements(new Object[]{%s})", listArguments));
+            String listCode;
+            if (expressions.size() == 0) {
+                listCode = "ListWrapper.fromElements(new Object[0])";
+            } else {
+                String listArguments = expressions.stream()
+                        .map(expressionToCode)
+                        .collect(Collectors.joining(","));
+                listCode = String.format("ListWrapper.fromElements(new Object[]{%s})", listArguments);
+            }
+            codeBuilder.addConstant(listCode);
 
             return codeBuilder;
         });
