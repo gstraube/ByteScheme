@@ -185,7 +185,6 @@ public class InterpreterTest {
             expectedOutput += expectedResults.get(key) + "\n";
         }
 
-        System.out.println(input);
         assertThat(interpret(input), is(expectedOutput));
     }
 
