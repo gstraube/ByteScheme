@@ -214,6 +214,14 @@ public class InterpreterTest {
         assertThat(interpret(input), is("#t\n#f\n#f\n#f\n"));
     }
 
+    @Test
+    public void the_if_statement_is_evaluated_correctly() {
+        String input = "(display (if (equal? 42 42) \"equal\" \"not equal\"))";
+        input += "(display (if (equal? 42 25) \"equal\" \"not equal\"))";
+        input += "(display (if (equal? 42 \"foo\") \"equal\" \"not equal\"))";
+        assertThat(interpret(input), is("equal\nnot equal\nnot equal\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 

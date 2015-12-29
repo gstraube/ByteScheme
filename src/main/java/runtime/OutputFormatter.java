@@ -11,6 +11,10 @@ public class OutputFormatter {
         return value ? "#t" : "#f";
     }
 
+    public static String output(boolean value) {
+        return value ? "#t" : "#f";
+    }
+
     public static String output(Character character) {
         return String.valueOf(character);
     }
