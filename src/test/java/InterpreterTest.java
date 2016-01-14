@@ -222,6 +222,13 @@ public class InterpreterTest {
         assertThat(interpret(input), is("equal\nnot equal\nnot equal\n"));
     }
 
+    @Test
+    public void it_is_possible_to_define_a_procedure_which_returns_a_constant() {
+        String input = "(define (the_answer) 42)";
+        input += "(the_answer)";
+        assertThat(interpret(input), is("42\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 

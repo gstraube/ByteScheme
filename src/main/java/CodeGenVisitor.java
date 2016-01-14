@@ -300,6 +300,34 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         return generatedCode.addVariableDefinition(variableCode);
     }
 
+    @Override
+    public GeneratedCode.GeneratedCodeBuilder visitProcedure_definition(SchemeParser.Procedure_definitionContext
+                                                                                procedureDefinition) {
+        GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+
+        String procedureName = procedureDefinition.proc_name().IDENTIFIER().getText();
+        List<SchemeParser.ExpressionContext> expression = procedureDefinition.expression();
+
+        SchemeParser.ExpressionContext lastExpression = expression.get(expression.size() - 1);
+        if (lastExpression.constant() != null) {
+            String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
+                    expressionToCode.apply(lastExpression).getConstant(0));
+
+            codeBuilder.addMethodsToBeDeclared(generatedMethod);
+
+            procedureMap.put(procedureName, expressions -> {
+                GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+                String mainMethodStatement = String.format("System.out.println(OutputFormatter.output(%s()));",
+                        procedureName);
+                generatedCodeBuilder.addStatementsToMainMethod(mainMethodStatement);
+
+                return generatedCodeBuilder;
+            });
+        }
+
+        return codeBuilder;
+    }
+
     private VariableDefinition createVariableDefinitionForConstant(String identifier,
                                                                    SchemeParser.ConstantContext constant) {
         String text = visitConstant(constant).getConstant(0);

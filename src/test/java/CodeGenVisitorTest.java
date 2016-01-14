@@ -153,6 +153,16 @@ public class CodeGenVisitorTest {
                         "new String(\"forty-two\"))"));
     }
 
+    @Test
+    public void it_is_possible_to_define_a_procedure_which_returns_a_constant() {
+        String input = "(define (the_answer) 42) (the_answer)";
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(0),
+                Matchers.is("public static Object the_answer(){return new java.math.BigInteger(\"42\");}"));
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(1),
+                Matchers.is("public static void main(String[] args)" +
+                        "{System.out.println(OutputFormatter.output(the_answer()));}"));
+    }
+
     private GeneratedCode visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
