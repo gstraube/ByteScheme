@@ -293,6 +293,9 @@ public class InterpreterTest {
         jarOut.putNextEntry(new ZipEntry("runtime/OutputFormatter.class"));
         jarOut.write(pool.get("runtime.OutputFormatter").toBytecode());
         jarOut.closeEntry();
+        jarOut.putNextEntry(new ZipEntry("runtime/PredefinedProcedures.class"));
+        jarOut.write(pool.get("runtime.PredefinedProcedures").toBytecode());
+        jarOut.closeEntry();
         jarOut.putNextEntry(new ZipEntry("lang/ListWrapper.class"));
         jarOut.write(pool.get("lang.ListWrapper").toBytecode());
         jarOut.closeEntry();

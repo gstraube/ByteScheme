@@ -86,10 +86,10 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         procedureMap.put(CAR_PROCEDURE_NAME, createListProcedure("car"));
         procedureMap.put(CDR_PROCEDURE_NAME, createListProcedure("cdr"));
 
-        procedureMap.put("+", createChainedProcedure("add"));
-        procedureMap.put("-", createChainedProcedure("subtract", "negate"));
-        procedureMap.put("*", createChainedProcedure("multiply"));
-        procedureMap.put("quotient", createChainedProcedure("divide"));
+        procedureMap.put("+", createChainedProcedure("PredefinedProcedures.add"));
+        procedureMap.put("-", createChainedProcedure("PredefinedProcedures.subtract", "PredefinedProcedures.negate"));
+        procedureMap.put("*", createChainedProcedure("PredefinedProcedures.multiply"));
+        procedureMap.put("quotient", createChainedProcedure("PredefinedProcedures.divide"));
         procedureMap.put("<", createComparisonProcedure(LESS_THAN));
         procedureMap.put("<=", createComparisonProcedure(LESS_THAN, EQUAL));
         procedureMap.put(">", createComparisonProcedure(GREATER_THAN));
@@ -155,37 +155,30 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         };
     }
 
-    private CodeGenProcedure createChainedProcedure(String procedureName, String singleArgumentProcedure) {
+    private CodeGenProcedure createChainedProcedure(String procedureName) {
         return expressions -> {
-            if (expressions.size() == 1) {
-                GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-                generatedCodeBuilder.addConstant(String.format("%s.%s()",
-                        expressionToCode.apply(expressions.get(0)).getConstant(0), singleArgumentProcedure));
+            GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
 
-                return generatedCodeBuilder;
-            }
+            String arguments = expressions.stream()
+                    .map(expressionToCode)
+                    .map(codeBuilder -> codeBuilder.getConstant(0))
+                    .collect(Collectors.joining(","));
+            String methodCall = String.format("%s(new Object[]{%s})", procedureName, arguments);
 
-            return chainMethodCalls(procedureName, expressions);
+            generatedCodeBuilder.addConstant(methodCall);
+
+            return generatedCodeBuilder;
         };
     }
 
-    private CodeGenProcedure createChainedProcedure(String procedureName) {
-        return expressions -> chainMethodCalls(procedureName, expressions);
-    }
-
-    private GeneratedCode.GeneratedCodeBuilder chainMethodCalls(String procedureName,
-                                                                List<SchemeParser.ExpressionContext> expressions) {
-        GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-
-        String constant = expressionToCode.apply(expressions.get(0)).getConstant(0);
-        for (int current = 1; current < expressions.size(); current++) {
-            constant += String.format(".%s(%s)", procedureName,
-                    expressionToCode.apply(expressions.get(current)).getConstant(0));
-        }
-
-        generatedCodeBuilder.addConstant(constant);
-
-        return generatedCodeBuilder;
+    private CodeGenProcedure createChainedProcedure(String procedureName, String singleArgumentProcedure) {
+        return expressions -> {
+            if (expressions.size() == 1) {
+                return createChainedProcedure(singleArgumentProcedure).generateCode(expressions);
+            } else {
+                return createChainedProcedure(procedureName).generateCode(expressions);
+            }
+        };
     }
 
     @Override

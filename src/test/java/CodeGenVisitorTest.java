@@ -118,25 +118,30 @@ public class CodeGenVisitorTest {
     public void predefined_procedures_can_be_called() {
         String input = "(+ 2 3 (+ 3 7) 6)";
         assertThat(visitParseTreeForInput(input).getConstants().get(0),
-                Matchers.is("new java.math.BigInteger(\"2\").add(new java.math.BigInteger(\"3\"))" +
-                        ".add(new java.math.BigInteger(\"3\").add(new java.math.BigInteger(\"7\")))" +
-                        ".add(new java.math.BigInteger(\"6\"))"));
-
+                Matchers.is("PredefinedProcedures.add(new Object[]{new java.math.BigInteger(\"2\")," +
+                        "new java.math.BigInteger(\"3\")," +
+                        "PredefinedProcedures.add(new Object[]{new java.math.BigInteger(\"3\")," +
+                        "new java.math.BigInteger(\"7\")}),new java.math.BigInteger(\"6\")})"));
 
         input = "(- 10 (- 5 200) 375 (- 20))";
-        assertThat(visitParseTreeForInput(input).getConstants().get(0), Matchers.is("new java.math.BigInteger(\"10\").subtract(new java.math.BigInteger(\"5\")" +
-                ".subtract(new java.math.BigInteger(\"200\"))).subtract(new java.math.BigInteger(\"375\"))" +
-                ".subtract(new java.math.BigInteger(\"20\").negate())"));
+        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+                Matchers.is("PredefinedProcedures.subtract(new Object[]{new java.math.BigInteger(\"10\")," +
+                        "PredefinedProcedures.subtract(new Object[]{new java.math.BigInteger(\"5\")," +
+                        "new java.math.BigInteger(\"200\")}),new java.math.BigInteger(\"375\")," +
+                        "PredefinedProcedures.negate(new Object[]{new java.math.BigInteger(\"20\")})})"));
 
         input = "(* 2 10 (* 3 7))";
-        assertThat(visitParseTreeForInput(input).getConstants().get(0), Matchers.is("new java.math.BigInteger(\"2\")" +
-                ".multiply(new java.math.BigInteger(\"10\")).multiply(new java.math.BigInteger(\"3\")" +
-                ".multiply(new java.math.BigInteger(\"7\")))"));
-
+        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+                Matchers.is("PredefinedProcedures.multiply(new Object[]{new java.math.BigInteger(\"2\")," +
+                        "new java.math.BigInteger(\"10\")," +
+                        "PredefinedProcedures.multiply(new Object[]{new java.math.BigInteger(\"3\")," +
+                        "new java.math.BigInteger(\"7\")})})"));
 
         input = "(quotient 10 (quotient 7 3))";
-        assertThat(visitParseTreeForInput(input).getConstants().get(0), Matchers.is("new java.math.BigInteger(\"10\")" +
-                ".divide(new java.math.BigInteger(\"7\").divide(new java.math.BigInteger(\"3\")))"));
+        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+                Matchers.is("PredefinedProcedures.divide(new Object[]{new java.math.BigInteger(\"10\")," +
+                        "PredefinedProcedures.divide(new Object[]{new java.math.BigInteger(\"7\")," +
+                        "new java.math.BigInteger(\"3\")})})"));
     }
 
     @Test
