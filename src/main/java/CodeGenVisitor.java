@@ -317,6 +317,35 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 return generatedCodeBuilder;
             });
         }
+        SchemeParser.ApplicationContext application = lastExpression.application();
+        if (application != null) {
+            String params = procedureDefinition
+                    .param()
+                    .stream()
+                    .map(p -> "Object " + p.IDENTIFIER().getText())
+                    .collect(Collectors.joining(","));
+
+            GeneratedCode.GeneratedCodeBuilder applicationCodeBuilder = visitApplication(application);
+
+            String generatedMethod = String.format("public static Object %s(%s){return %s;}",
+                    procedureName, params, applicationCodeBuilder.getConstant(0));
+
+            codeBuilder.addMethodsToBeDeclared(generatedMethod);
+
+            procedureMap.put(procedureName, expressions -> {
+                GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+                String arguments = expressions.stream()
+                        .map(expressionToCode)
+                        .map(genCodeBuilder -> genCodeBuilder.getConstant(0))
+                        .collect(Collectors.joining(","));
+                String mainMethodStatement = String.format("System.out.println(OutputFormatter.output(%s(%s)));",
+                        procedureName, arguments);
+                generatedCodeBuilder.addStatementsToMainMethod(mainMethodStatement);
+                generatedCodeBuilder.addConstant(String.format("%s(%s)", procedureName, arguments));
+
+                return generatedCodeBuilder;
+            });
+        }
 
         return codeBuilder;
     }

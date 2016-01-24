@@ -229,6 +229,14 @@ public class InterpreterTest {
         assertThat(interpret(input), is("42\n"));
     }
 
+    @Test
+    public void it_is_possible_to_define_a_procedure_which_contains_a_procedure_application() {
+        String input = "(define (double_arg x) (* x 2))";
+        input += "(define (double_plus_2 x) (+ (double_arg x) 2))";
+        input += "(double_plus_2 20)";
+        assertThat(interpret(input), is("42\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 

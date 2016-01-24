@@ -168,6 +168,17 @@ public class CodeGenVisitorTest {
                         "{System.out.println(OutputFormatter.output(the_answer()));}"));
     }
 
+    @Test
+    public void it_is_possible_to_define_a_procedure_which_contains_a_procedure_application() {
+        String input = "(define (double_arg x) (* x 2)) (double_arg 20)";
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(0),
+                Matchers.is("public static Object double_arg(Object x)" +
+                        "{return PredefinedProcedures.multiply(new Object[]{x,new java.math.BigInteger(\"2\")});}"));
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(1),
+                Matchers.is("public static void main(String[] args)" +
+                        "{System.out.println(OutputFormatter.output(double_arg(new java.math.BigInteger(\"20\"))));}"));
+    }
+
     private GeneratedCode visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
