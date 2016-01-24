@@ -179,6 +179,15 @@ public class CodeGenVisitorTest {
                         "{System.out.println(OutputFormatter.output(double_arg(new java.math.BigInteger(\"20\"))));}"));
     }
 
+    @Test
+    public void it_is_possible_to_define_a_procedure_containing_the_if_special_form() {
+        String input = "(define (is_42 x) (if (equal? x 42) \"yes\" \"no\"))";
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(0),
+                Matchers.is("public static Object is_42(Object x)" +
+                        "{if(java.util.Objects.equals(x,new java.math.BigInteger(\"42\"))){return new String(\"yes\");}" +
+                        "else{return new String(\"no\");}}"));
+    }
+
     private GeneratedCode visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);

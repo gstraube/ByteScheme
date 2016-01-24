@@ -237,6 +237,14 @@ public class InterpreterTest {
         assertThat(interpret(input), is("42\n"));
     }
 
+    @Test
+    public void it_is_possible_to_define_a_procedure_containing_the_if_special_form() {
+        String input = "(define (is_42 x) (if (equal? x 42) \"yes\" \"no\"))";
+        input += "(is_42 42)";
+        input += "(is_42 21)";
+        assertThat(interpret(input), is("yes\nno\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 

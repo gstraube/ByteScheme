@@ -325,10 +325,19 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                     .map(p -> "Object " + p.IDENTIFIER().getText())
                     .collect(Collectors.joining(","));
 
-            GeneratedCode.GeneratedCodeBuilder applicationCodeBuilder = visitApplication(application);
+            String body;
+            if ("if".equalsIgnoreCase(application.IDENTIFIER().getText())) {
+                List<SchemeParser.ExpressionContext> expressions = application.expression();
+                body = String.format("if(%s){return %s;}else{return %s;}",
+                        expressionToCode.apply(expressions.get(0)).getConstant(0),
+                        expressionToCode.apply(expressions.get(1)).getConstant(0),
+                        expressionToCode.apply(expressions.get(2)).getConstant(0));
+            } else {
+                body = "return " + visitApplication(application).getConstant(0) + ";";
+            }
 
-            String generatedMethod = String.format("public static Object %s(%s){return %s;}",
-                    procedureName, params, applicationCodeBuilder.getConstant(0));
+            String generatedMethod = String.format("public static Object %s(%s){%s}",
+                    procedureName, params, body);
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
