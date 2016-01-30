@@ -251,6 +251,12 @@ public class InterpreterTest {
         assertThat(interpret(input), is("256\n"));
     }
 
+    @Test
+    public void a_procedure_definition_can_contain_definitions() throws Exception {
+        String input = "(define (foo) (define bar \"a_string\") bar) (display (foo))";
+        assertThat(interpret(input), is("a_string\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 

@@ -243,6 +243,12 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     }
 
     @Override
+    public GeneratedCode.GeneratedCodeBuilder visitDefinition(SchemeParser.DefinitionContext definition) {
+        return definition.variable_definition() != null ? visitVariable_definition(definition.variable_definition()) :
+                visitProcedure_definition(definition.procedure_definition());
+    }
+
+    @Override
     public GeneratedCode.GeneratedCodeBuilder visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
         GeneratedCode.GeneratedCodeBuilder generatedCode = new GeneratedCode.GeneratedCodeBuilder();
 
@@ -280,7 +286,10 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     @Override
     public GeneratedCode.GeneratedCodeBuilder visitProcedure_definition(SchemeParser.Procedure_definitionContext
                                                                                 procedureDefinition) {
-        GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+        GeneratedCode.GeneratedCodeBuilder codeBuilder = procedureDefinition.definition()
+                .stream()
+                .map(this::visitDefinition)
+                .reduce(new GeneratedCode.GeneratedCodeBuilder(), GeneratedCode.GeneratedCodeBuilder::mergeWith);
 
         String procedureName = procedureDefinition.proc_name().IDENTIFIER().getText();
         List<SchemeParser.ExpressionContext> expression = procedureDefinition.expression();
