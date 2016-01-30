@@ -309,10 +309,13 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
             procedureMap.put(procedureName, expressions -> {
+                String arguments = expressions.stream()
+                        .map(expressionToCode)
+                        .map(cb -> cb.getConstant(0))
+                        .collect(Collectors.joining(","));
+
                 GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-                String mainMethodStatement = String.format("System.out.println(OutputFormatter.output(%s()));",
-                        procedureName);
-                generatedCodeBuilder.addStatementsToMainMethod(mainMethodStatement);
+                generatedCodeBuilder.addConstant(String.format("%s(%s)", procedureName, arguments));
 
                 return generatedCodeBuilder;
             });
@@ -347,12 +350,28 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                         .map(expressionToCode)
                         .map(genCodeBuilder -> genCodeBuilder.getConstant(0))
                         .collect(Collectors.joining(","));
-                String mainMethodStatement = String.format("System.out.println(OutputFormatter.output(%s(%s)));",
-                        procedureName, arguments);
-                generatedCodeBuilder.addStatementsToMainMethod(mainMethodStatement);
                 generatedCodeBuilder.addConstant(String.format("%s(%s)", procedureName, arguments));
 
                 return generatedCodeBuilder;
+            });
+        }
+        if (lastExpression.IDENTIFIER() != null) {
+            String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
+                    expressionToCode.apply(lastExpression).getConstant(0));
+
+            codeBuilder.addMethodsToBeDeclared(generatedMethod);
+
+            procedureMap.put(procedureName, expressions -> {
+                String arguments = expressions.stream()
+                        .map(expressionToCode)
+                        .map(genCodeBuilder -> genCodeBuilder.getConstant(0))
+                        .collect(Collectors.joining(","));
+
+                GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+                generatedCodeBuilder.addConstant(String.format("%s(%s)", procedureName, arguments));
+
+                return generatedCodeBuilder;
+
             });
         }
 

@@ -160,7 +160,7 @@ public class CodeGenVisitorTest {
 
     @Test
     public void it_is_possible_to_define_a_procedure_which_returns_a_constant() {
-        String input = "(define (the_answer) 42) (the_answer)";
+        String input = "(define (the_answer) 42) (display (the_answer))";
         assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(0),
                 Matchers.is("public static Object the_answer(){return new java.math.BigInteger(\"42\");}"));
         assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(1),
@@ -169,8 +169,18 @@ public class CodeGenVisitorTest {
     }
 
     @Test
+    public void it_is_possible_to_define_a_procedure_which_references_a_variable() {
+        String input = "(define foo 123) (define (bar) foo) (display (bar))";
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(0),
+                Matchers.is("public static Object bar(){return foo;}"));
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(1),
+                Matchers.is("public static void main(String[] args)" +
+                        "{System.out.println(OutputFormatter.output(bar()));}"));
+    }
+
+    @Test
     public void it_is_possible_to_define_a_procedure_which_contains_a_procedure_application() {
-        String input = "(define (double_arg x) (* x 2)) (double_arg 20)";
+        String input = "(define (double_arg x) (* x 2)) (display (double_arg 20))";
         assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(0),
                 Matchers.is("public static Object double_arg(Object x)" +
                         "{return PredefinedProcedures.multiply(new Object[]{x,new java.math.BigInteger(\"2\")});}"));

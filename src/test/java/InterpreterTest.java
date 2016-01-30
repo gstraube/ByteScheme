@@ -225,7 +225,7 @@ public class InterpreterTest {
     @Test
     public void it_is_possible_to_define_a_procedure_which_returns_a_constant() {
         String input = "(define (the_answer) 42)";
-        input += "(the_answer)";
+        input += "(display (the_answer))";
         assertThat(interpret(input), is("42\n"));
     }
 
@@ -233,16 +233,22 @@ public class InterpreterTest {
     public void it_is_possible_to_define_a_procedure_which_contains_a_procedure_application() {
         String input = "(define (double_arg x) (* x 2))";
         input += "(define (double_plus_2 x) (+ (double_arg x) 2))";
-        input += "(double_plus_2 20)";
+        input += "(display (double_plus_2 20))";
         assertThat(interpret(input), is("42\n"));
     }
 
     @Test
     public void it_is_possible_to_define_a_procedure_containing_the_if_special_form() {
         String input = "(define (is_42 x) (if (equal? x 42) \"yes\" \"no\"))";
-        input += "(is_42 42)";
-        input += "(is_42 21)";
+        input += "(display (is_42 42))";
+        input += "(display (is_42 21))";
         assertThat(interpret(input), is("yes\nno\n"));
+    }
+
+    @Test
+    public void a_variable_can_be_referenced_in_the_body_of_a_procedure_definition() {
+        String input = "(define foo 128) (define (bar) foo) (display (* (bar) 2))";
+        assertThat(interpret(input), is("256\n"));
     }
 
     private String interpret(String input) {
