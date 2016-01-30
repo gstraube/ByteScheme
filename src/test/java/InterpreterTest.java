@@ -265,6 +265,12 @@ public class InterpreterTest {
         assertThat(interpret(input), is("24\n25\n7\n"));
     }
 
+    @Test
+    public void a_procedure_definition_can_contain_a_list_in_its_body() throws Exception {
+        String input = "(define (foo) (list 1 \"a_string\" (list 3 #t) #\\a)) (display (foo))";
+        assertThat(interpret(input), is("(1 a_string (3 #t) a)\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
