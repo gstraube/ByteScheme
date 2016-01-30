@@ -133,7 +133,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             for (int current = 0; current < expressions.size() - 1; current++) {
                 int next = current + 1;
-                String compareTo = String.format("%s.compareTo(%s)",
+                String compareTo = String.format("((java.math.BigInteger) %s).compareTo(%s)",
                         expressionToCode.apply(expressions.get(current)).getGeneratedCode(),
                         expressionToCode.apply(expressions.get(next)).getGeneratedCode());
 
@@ -147,7 +147,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             String completeComparison = comparisons
                     .stream()
-                    .collect(Collectors.joining("&&", "new Boolean(", ")"));
+                    .collect(Collectors.joining("&&", "(", ")"));
 
             generatedCodeBuilder.setGeneratedCode(completeComparison);
 
@@ -294,6 +294,8 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         String procedureName = procedureDefinition.proc_name().IDENTIFIER().getText();
         List<SchemeParser.ExpressionContext> expression = procedureDefinition.expression();
 
+        procedureMap.put(procedureName, createProcedure(procedureName, "%s(%s)"));
+
         SchemeParser.ExpressionContext lastExpression = expression.get(expression.size() - 1);
         if (lastExpression.constant() != null) {
             String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
@@ -301,7 +303,6 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
-            procedureMap.put(procedureName, createProcedure(procedureName, "%s(%s)"));
         }
         SchemeParser.ApplicationContext application = lastExpression.application();
         if (application != null) {
@@ -326,16 +327,12 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                     procedureName, params, body);
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
-
-            procedureMap.put(procedureName, createProcedure(procedureName, "%s(%s)"));
         }
         if (lastExpression.IDENTIFIER() != null) {
             String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
                     expressionToCode.apply(lastExpression).getGeneratedCode());
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
-
-            procedureMap.put(procedureName, createProcedure(procedureName, "%s(%s)"));
         }
 
         return codeBuilder;

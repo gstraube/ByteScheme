@@ -271,6 +271,13 @@ public class InterpreterTest {
         assertThat(interpret(input), is("(1 a_string (3 #t) a)\n"));
     }
 
+    @Test
+    public void it_is_possible_to_define_recursive_procedures() throws Exception {
+        String input = "(define (fib n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2)))))";
+        input += "(display (fib 20))";
+        assertThat(interpret(input), is("6765\n"));
+    }
+
     private String interpret(String input) {
         GeneratedCode generatedCode = visitParseTreeForInput(input);
 
