@@ -6,7 +6,6 @@ import org.junit.Test;
 import parser.ErrorListener;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -18,19 +17,14 @@ public class CodeGenVisitorTest {
 
     @Test
     public void constant_expressions_are_processed_correctly() {
-        String input = "20414342334 \"a string\" #\\λ #t #f #\\newline #\\space";
-        GeneratedCode generatedCode = visitParseTreeForInput(input);
-
-        List<String> expectedOutput = new ArrayList<>();
-        expectedOutput.add("new java.math.BigInteger(\"20414342334\");");
-        expectedOutput.add("new String(\"a string\");");
-        expectedOutput.add("new Character('λ');");
-        expectedOutput.add("new Boolean(true);");
-        expectedOutput.add("new Boolean(false);");
-        expectedOutput.add("new Character('\\n');");
-        expectedOutput.add("new Character(' ');");
-
-        assertThat(generatedCode.getConstants(), is(expectedOutput));
+        String[] inputs = {"20414342334", "\"a string\"", "#\\λ", "#t", "#f", "#\\newline", "#\\space"};
+        String[] expectedOutputs = {"new java.math.BigInteger(\"20414342334\");", "new String(\"a string\");",
+                "new Character('λ');", "new Boolean(true);", "new Boolean(false);", "new Character('\\n');",
+                "new Character(' ');"};
+        for (int i = 0; i < inputs.length; i++) {
+            GeneratedCode generatedCode = visitParseTreeForInput(inputs[i]);
+            assertThat(generatedCode.getGeneratedCode(), is(expectedOutputs[i]));
+        }
     }
 
     @Test
@@ -87,7 +81,7 @@ public class CodeGenVisitorTest {
         String expectedOutput = "ListWrapper.fromElements(new Object[]{new java.math.BigInteger(\"15\")," +
                 "new java.math.BigInteger(\"7\"),new Character('u'),new Boolean(false),new String(\"a string\")})";
 
-        assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
+        assertThat(generatedCode.getGeneratedCode(), is(expectedOutput));
     }
 
     @Test
@@ -98,7 +92,7 @@ public class CodeGenVisitorTest {
         String expectedOutput = "ListWrapper.fromElements(new Object[]{new Character('u'),new Boolean(false)," +
                 "a_variable})";
 
-        assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
+        assertThat(generatedCode.getGeneratedCode(), is(expectedOutput));
     }
 
     @Test
@@ -111,34 +105,34 @@ public class CodeGenVisitorTest {
                 "ListWrapper.fromElements(new Object[]{new Character('u'),new Boolean(false)})," +
                 "new java.math.BigInteger(\"2\"),new String(\"a string\")})";
 
-        assertThat(generatedCode.getConstants(), is(Collections.singletonList(expectedOutput)));
+        assertThat(generatedCode.getGeneratedCode(), is(expectedOutput));
     }
 
     @Test
     public void predefined_procedures_can_be_called() {
         String input = "(+ 2 3 (+ 3 7) 6)";
-        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+        assertThat(visitParseTreeForInput(input).getGeneratedCode(),
                 Matchers.is("PredefinedProcedures.add(new Object[]{new java.math.BigInteger(\"2\")," +
                         "new java.math.BigInteger(\"3\")," +
                         "PredefinedProcedures.add(new Object[]{new java.math.BigInteger(\"3\")," +
                         "new java.math.BigInteger(\"7\")}),new java.math.BigInteger(\"6\")})"));
 
         input = "(- 10 (- 5 200) 375 (- 20))";
-        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+        assertThat(visitParseTreeForInput(input).getGeneratedCode(),
                 Matchers.is("PredefinedProcedures.subtract(new Object[]{new java.math.BigInteger(\"10\")," +
                         "PredefinedProcedures.subtract(new Object[]{new java.math.BigInteger(\"5\")," +
                         "new java.math.BigInteger(\"200\")}),new java.math.BigInteger(\"375\")," +
                         "PredefinedProcedures.negate(new Object[]{new java.math.BigInteger(\"20\")})})"));
 
         input = "(* 2 10 (* 3 7))";
-        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+        assertThat(visitParseTreeForInput(input).getGeneratedCode(),
                 Matchers.is("PredefinedProcedures.multiply(new Object[]{new java.math.BigInteger(\"2\")," +
                         "new java.math.BigInteger(\"10\")," +
                         "PredefinedProcedures.multiply(new Object[]{new java.math.BigInteger(\"3\")," +
                         "new java.math.BigInteger(\"7\")})})"));
 
         input = "(quotient 10 (quotient 7 3))";
-        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+        assertThat(visitParseTreeForInput(input).getGeneratedCode(),
                 Matchers.is("PredefinedProcedures.divide(new Object[]{new java.math.BigInteger(\"10\")," +
                         "PredefinedProcedures.divide(new Object[]{new java.math.BigInteger(\"7\")," +
                         "new java.math.BigInteger(\"3\")})})"));
@@ -146,14 +140,14 @@ public class CodeGenVisitorTest {
 
     @Test
     public void an_empty_list_can_be_created() {
-        assertThat(visitParseTreeForInput("(list)").getConstants().get(0),
+        assertThat(visitParseTreeForInput("(list)").getGeneratedCode(),
                 is("ListWrapper.fromElements(new Object[0])"));
     }
 
     @Test
     public void the_equal_procedure_is_implemented_by_the_equals_method_defined_in_the_Objects_class() {
         String input = "(equal? 42 \"forty-two\")";
-        assertThat(visitParseTreeForInput(input).getConstants().get(0),
+        assertThat(visitParseTreeForInput(input).getGeneratedCode(),
                 Matchers.is("java.util.Objects.equals(new java.math.BigInteger(\"42\")," +
                         "new String(\"forty-two\"))"));
     }

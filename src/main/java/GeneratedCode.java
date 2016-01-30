@@ -7,13 +7,13 @@ public class GeneratedCode {
 
     private List<String> methodsToBeDeclared = new ArrayList<>();
 
-    private List<String> constants = new ArrayList<>();
     private List<String> variableDefinitions = new ArrayList<>();
+    private String generatedCode;
 
-    public GeneratedCode(List<String> methodsToBeDeclared, List<String> variableDefinitions, List<String> constants) {
+    public GeneratedCode(List<String> methodsToBeDeclared, List<String> variableDefinitions, String generatedCode) {
         this.methodsToBeDeclared = methodsToBeDeclared;
         this.variableDefinitions = variableDefinitions;
-        this.constants = constants;
+        this.generatedCode = generatedCode;
     }
 
     public List<String> getMethodsToBeDeclared() {
@@ -24,8 +24,8 @@ public class GeneratedCode {
         return new ArrayList<>(variableDefinitions);
     }
 
-    public List<String> getConstants() {
-        return new ArrayList<>(constants);
+    public String getGeneratedCode() {
+        return generatedCode;
     }
 
     public static class GeneratedCodeBuilder {
@@ -33,7 +33,7 @@ public class GeneratedCode {
         private List<String> mainMethod = new ArrayList<>();
         private List<String> methodsToBeDeclared = new ArrayList<>();
         private List<String> variableDefinitions = new ArrayList<>();
-        private List<String> constants = new ArrayList<>();
+        private String generatedCode;
 
         public GeneratedCodeBuilder addVariableDefinitions(String... variableDefinitions) {
             this.variableDefinitions.addAll(Arrays.asList(variableDefinitions));
@@ -51,11 +51,11 @@ public class GeneratedCode {
 
             methodsToBeDeclared.add(mainMethod.stream().collect(Collectors.joining()));
 
-            return new GeneratedCode(methodsToBeDeclared, variableDefinitions, constants);
+            return new GeneratedCode(methodsToBeDeclared, variableDefinitions, generatedCode);
         }
 
-        public GeneratedCodeBuilder addConstant(String constant) {
-            constants.add(constant);
+        public GeneratedCodeBuilder setGeneratedCode(String generatedCode) {
+            this.generatedCode = generatedCode;
 
             return this;
         }
@@ -66,15 +66,14 @@ public class GeneratedCode {
             return this;
         }
 
-        public String getConstant(int index) {
-            return constants.get(index);
+        public String getGeneratedCode() {
+            return generatedCode;
         }
 
         public GeneratedCodeBuilder mergeWith(GeneratedCodeBuilder other) {
             GeneratedCodeBuilder merged = new GeneratedCodeBuilder();
 
-            merged.constants.addAll(constants);
-            merged.constants.addAll(other.constants);
+            merged.generatedCode = generatedCode != null ? generatedCode : other.generatedCode;
 
             merged.variableDefinitions.addAll(variableDefinitions);
             merged.variableDefinitions.addAll(other.variableDefinitions);

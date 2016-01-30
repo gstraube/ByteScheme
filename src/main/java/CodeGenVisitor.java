@@ -26,7 +26,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         String codeConstant = "";
 
         if (expression.constant() != null) {
-            String constant = visitConstant(expression.constant()).getConstant(0);
+            String constant = visitConstant(expression.constant()).getGeneratedCode();
             codeConstant = constant.substring(0, constant.length() - 1);
         }
 
@@ -36,11 +36,11 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
         if (expression.application() != null) {
             GeneratedCode.GeneratedCodeBuilder genCodeBuilder = visitApplication(expression.application());
-            codeConstant = genCodeBuilder.getConstant(0);
+            codeConstant = genCodeBuilder.getGeneratedCode();
             codeBuilder = codeBuilder.mergeWith(genCodeBuilder);
         }
 
-        codeBuilder.addConstant(codeConstant);
+        codeBuilder.setGeneratedCode(codeConstant);
 
         return codeBuilder;
     };
@@ -57,7 +57,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 String mainMethodStatement = "System.out.println(OutputFormatter.output(%s));";
                 GeneratedCode.GeneratedCodeBuilder genCodeBuilder = expressionToCode.apply(argument);
                 codeBuilder.addStatementsToMainMethod(String.format(mainMethodStatement,
-                        genCodeBuilder.getConstant(0)));
+                        genCodeBuilder.getGeneratedCode()));
 
                 codeBuilder = codeBuilder.mergeWith(genCodeBuilder);
             }
@@ -74,11 +74,11 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             } else {
                 String listArguments = expressions.stream()
                         .map(expressionToCode)
-                        .map(genCodeBuilder -> genCodeBuilder.getConstant(0))
+                        .map(GeneratedCode.GeneratedCodeBuilder::getGeneratedCode)
                         .collect(Collectors.joining(","));
                 listCode = String.format("ListWrapper.fromElements(new Object[]{%s})", listArguments);
             }
-            codeBuilder.addConstant(listCode);
+            codeBuilder.setGeneratedCode(listCode);
 
             return codeBuilder;
         });
@@ -99,10 +99,10 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
 
             if (expressions.size() == 2) {
-                String firstArgument = expressionToCode.apply(expressions.get(0)).getConstant(0);
-                String secondArgument = expressionToCode.apply(expressions.get(1)).getConstant(0);
+                String firstArgument = expressionToCode.apply(expressions.get(0)).getGeneratedCode();
+                String secondArgument = expressionToCode.apply(expressions.get(1)).getGeneratedCode();
 
-                codeBuilder.addConstant(String.format("java.util.Objects.equals(%s,%s)", firstArgument, secondArgument));
+                codeBuilder.setGeneratedCode(String.format("java.util.Objects.equals(%s,%s)", firstArgument, secondArgument));
             }
 
             return codeBuilder;
@@ -115,9 +115,9 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             if (expressions.size() == 1) {
                 if (expressions.get(0).application() != null) {
-                    String list = visitApplication(expressions.get(0).application()).getConstant(0);
+                    String list = visitApplication(expressions.get(0).application()).getGeneratedCode();
 
-                    codeBuilder.addConstant(String.format("%s.%s()", list, procedureName));
+                    codeBuilder.setGeneratedCode(String.format("%s.%s()", list, procedureName));
                 }
             }
 
@@ -134,8 +134,8 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             for (int current = 0; current < expressions.size() - 1; current++) {
                 int next = current + 1;
                 String compareTo = String.format("%s.compareTo(%s)",
-                        expressionToCode.apply(expressions.get(current)).getConstant(0),
-                        expressionToCode.apply(expressions.get(next)).getConstant(0));
+                        expressionToCode.apply(expressions.get(current)).getGeneratedCode(),
+                        expressionToCode.apply(expressions.get(next)).getGeneratedCode());
 
                 String comparison = results
                         .stream()
@@ -149,7 +149,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                     .stream()
                     .collect(Collectors.joining("&&", "new Boolean(", ")"));
 
-            generatedCodeBuilder.addConstant(completeComparison);
+            generatedCodeBuilder.setGeneratedCode(completeComparison);
 
             return generatedCodeBuilder;
         };
@@ -183,12 +183,12 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                     String ifStatement =
                             String.format("public static Object %s {if(%s){return %s;}else{return %s;}}",
                                     methodName,
-                                    expressionToCode.apply(expressions.get(0)).getConstant(0),
-                                    expressionToCode.apply(expressions.get(1)).getConstant(0),
-                                    expressionToCode.apply(expressions.get(2)).getConstant(0));
+                                    expressionToCode.apply(expressions.get(0)).getGeneratedCode(),
+                                    expressionToCode.apply(expressions.get(1)).getGeneratedCode(),
+                                    expressionToCode.apply(expressions.get(2)).getGeneratedCode());
 
                     codeBuilder.addMethodsToBeDeclared(ifStatement);
-                    codeBuilder.addConstant(methodName);
+                    codeBuilder.setGeneratedCode(methodName);
 
                     return codeBuilder;
                 }
@@ -237,7 +237,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             constantCode = String.format("new Boolean(%b);", "#t".equals(constant.BOOLEAN().getText()));
         }
 
-        codeBuilder.addConstant(constantCode);
+        codeBuilder.setGeneratedCode(constantCode);
 
         return codeBuilder;
     }
@@ -288,7 +288,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         SchemeParser.ExpressionContext lastExpression = expression.get(expression.size() - 1);
         if (lastExpression.constant() != null) {
             String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
-                    expressionToCode.apply(lastExpression).getConstant(0));
+                    expressionToCode.apply(lastExpression).getGeneratedCode());
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
@@ -306,11 +306,11 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             if ("if".equalsIgnoreCase(application.IDENTIFIER().getText())) {
                 List<SchemeParser.ExpressionContext> expressions = application.expression();
                 body = String.format("if(%s){return %s;}else{return %s;}",
-                        expressionToCode.apply(expressions.get(0)).getConstant(0),
-                        expressionToCode.apply(expressions.get(1)).getConstant(0),
-                        expressionToCode.apply(expressions.get(2)).getConstant(0));
+                        expressionToCode.apply(expressions.get(0)).getGeneratedCode(),
+                        expressionToCode.apply(expressions.get(1)).getGeneratedCode(),
+                        expressionToCode.apply(expressions.get(2)).getGeneratedCode());
             } else {
-                body = "return " + visitApplication(application).getConstant(0) + ";";
+                body = "return " + visitApplication(application).getGeneratedCode() + ";";
             }
 
             String generatedMethod = String.format("public static Object %s(%s){%s}",
@@ -322,7 +322,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         }
         if (lastExpression.IDENTIFIER() != null) {
             String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
-                    expressionToCode.apply(lastExpression).getConstant(0));
+                    expressionToCode.apply(lastExpression).getGeneratedCode());
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
@@ -337,9 +337,9 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
             String arguments = expressions.stream()
                     .map(expressionToCode)
-                    .map(genCodeBuilder -> genCodeBuilder.getConstant(0))
+                    .map(GeneratedCode.GeneratedCodeBuilder::getGeneratedCode)
                     .collect(Collectors.joining(","));
-            generatedCodeBuilder.addConstant(String.format(template, procedureName, arguments));
+            generatedCodeBuilder.setGeneratedCode(String.format(template, procedureName, arguments));
 
             return generatedCodeBuilder;
         };
@@ -347,7 +347,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
     private VariableDefinition createVariableDefinitionForConstant(String identifier,
                                                                    SchemeParser.ConstantContext constant) {
-        String text = visitConstant(constant).getConstant(0);
+        String text = visitConstant(constant).getGeneratedCode();
 
         if (constant.NUMBER() != null) {
             return VariableDefinition.createForBigInteger(identifier, text);
