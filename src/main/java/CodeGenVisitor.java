@@ -297,12 +297,11 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         procedureMap.put(procedureName, createProcedure(procedureName, "%s(%s)"));
 
         SchemeParser.ExpressionContext lastExpression = expression.get(expression.size() - 1);
+
+        String generatedMethod = "";
         if (lastExpression.constant() != null) {
-            String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
+            generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
                     expressionToCode.apply(lastExpression).getGeneratedCode());
-
-            codeBuilder.addMethodsToBeDeclared(generatedMethod);
-
         }
         SchemeParser.ApplicationContext application = lastExpression.application();
         if (application != null) {
@@ -323,17 +322,15 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 body = "return " + visitApplication(application).getGeneratedCode() + ";";
             }
 
-            String generatedMethod = String.format("public static Object %s(%s){%s}",
+            generatedMethod = String.format("public static Object %s(%s){%s}",
                     procedureName, params, body);
-
-            codeBuilder.addMethodsToBeDeclared(generatedMethod);
         }
         if (lastExpression.IDENTIFIER() != null) {
-            String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
+            generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
                     expressionToCode.apply(lastExpression).getGeneratedCode());
-
-            codeBuilder.addMethodsToBeDeclared(generatedMethod);
         }
+
+        codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
         return codeBuilder;
     }
