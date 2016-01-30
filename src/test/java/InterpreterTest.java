@@ -56,6 +56,7 @@ public class InterpreterTest {
         pool = ClassPool.getDefault();
         pool.importPackage("runtime");
         pool.importPackage("lang");
+        pool.importPackage("java.math.BigInteger");
         mainClassCt = pool.makeClass(String.format("Main%d", classIndex.get()));
     }
 

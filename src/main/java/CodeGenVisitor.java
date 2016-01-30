@@ -133,7 +133,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             for (int current = 0; current < expressions.size() - 1; current++) {
                 int next = current + 1;
-                String compareTo = String.format("((java.math.BigInteger) %s).compareTo(%s)",
+                String compareTo = String.format("((BigInteger) %s).compareTo(%s)",
                         expressionToCode.apply(expressions.get(current)).getGeneratedCode(),
                         expressionToCode.apply(expressions.get(next)).getGeneratedCode());
 
@@ -204,7 +204,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
         String constantCode = "";
         if (constant.NUMBER() != null) {
-            constantCode = String.format("new java.math.BigInteger(\"%s\");", constant.NUMBER().getText());
+            constantCode = String.format("new BigInteger(\"%s\");", constant.NUMBER().getText());
         }
         if (constant.CHARACTER() != null) {
             char containedChar;
@@ -378,7 +378,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
     private static class VariableDefinition {
 
-        private static final String INTEGER_CONSTANT_VAR_DEFINITION = "static java.math.BigInteger %s = %s";
+        private static final String INTEGER_CONSTANT_VAR_DEFINITION = "static BigInteger %s = %s";
         private static final String CHAR_CONSTANT_VAR_DEFINITION = "static Character %s = %s";
         private static final String STRING_CONSTANT_VAR_DEFINITION = "static String %s = %s";
         private static final String BOOLEAN_CONSTANT_VAR_DEFINITION = "static Boolean %s = %s";
