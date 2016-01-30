@@ -308,17 +308,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
-            procedureMap.put(procedureName, expressions -> {
-                String arguments = expressions.stream()
-                        .map(expressionToCode)
-                        .map(cb -> cb.getConstant(0))
-                        .collect(Collectors.joining(","));
-
-                GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-                generatedCodeBuilder.addConstant(String.format("%s(%s)", procedureName, arguments));
-
-                return generatedCodeBuilder;
-            });
+            procedureMap.put(procedureName, createProcedure(procedureName));
         }
         SchemeParser.ApplicationContext application = lastExpression.application();
         if (application != null) {
@@ -344,16 +334,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
-            procedureMap.put(procedureName, expressions -> {
-                GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-                String arguments = expressions.stream()
-                        .map(expressionToCode)
-                        .map(genCodeBuilder -> genCodeBuilder.getConstant(0))
-                        .collect(Collectors.joining(","));
-                generatedCodeBuilder.addConstant(String.format("%s(%s)", procedureName, arguments));
-
-                return generatedCodeBuilder;
-            });
+            procedureMap.put(procedureName, createProcedure(procedureName));
         }
         if (lastExpression.IDENTIFIER() != null) {
             String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
@@ -361,21 +342,23 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
-            procedureMap.put(procedureName, expressions -> {
-                String arguments = expressions.stream()
-                        .map(expressionToCode)
-                        .map(genCodeBuilder -> genCodeBuilder.getConstant(0))
-                        .collect(Collectors.joining(","));
-
-                GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-                generatedCodeBuilder.addConstant(String.format("%s(%s)", procedureName, arguments));
-
-                return generatedCodeBuilder;
-
-            });
+            procedureMap.put(procedureName, createProcedure(procedureName));
         }
 
         return codeBuilder;
+    }
+
+    private CodeGenProcedure createProcedure(String procedureName) {
+        return expressions -> {
+            GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+            String arguments = expressions.stream()
+                    .map(expressionToCode)
+                    .map(genCodeBuilder -> genCodeBuilder.getConstant(0))
+                    .collect(Collectors.joining(","));
+            generatedCodeBuilder.addConstant(String.format("%s(%s)", procedureName, arguments));
+
+            return generatedCodeBuilder;
+        };
     }
 
     private VariableDefinition createVariableDefinitionForConstant(String identifier,
