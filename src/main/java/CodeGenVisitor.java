@@ -86,10 +86,10 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         procedureMap.put(CAR_PROCEDURE_NAME, createListProcedure("car"));
         procedureMap.put(CDR_PROCEDURE_NAME, createListProcedure("cdr"));
 
-        procedureMap.put("+", createChainedProcedure("PredefinedProcedures.add"));
+        procedureMap.put("+", createProcedure("PredefinedProcedures.add", "%s(new Object[]{%s})"));
         procedureMap.put("-", createChainedProcedure("PredefinedProcedures.subtract", "PredefinedProcedures.negate"));
-        procedureMap.put("*", createChainedProcedure("PredefinedProcedures.multiply"));
-        procedureMap.put("quotient", createChainedProcedure("PredefinedProcedures.divide"));
+        procedureMap.put("*", createProcedure("PredefinedProcedures.multiply", "%s(new Object[]{%s})"));
+        procedureMap.put("quotient", createProcedure("PredefinedProcedures.divide", "%s(new Object[]{%s})"));
         procedureMap.put("<", createComparisonProcedure(LESS_THAN));
         procedureMap.put("<=", createComparisonProcedure(LESS_THAN, EQUAL));
         procedureMap.put(">", createComparisonProcedure(GREATER_THAN));
@@ -155,28 +155,12 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         };
     }
 
-    private CodeGenProcedure createChainedProcedure(String procedureName) {
-        return expressions -> {
-            GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-
-            String arguments = expressions.stream()
-                    .map(expressionToCode)
-                    .map(codeBuilder -> codeBuilder.getConstant(0))
-                    .collect(Collectors.joining(","));
-            String methodCall = String.format("%s(new Object[]{%s})", procedureName, arguments);
-
-            generatedCodeBuilder.addConstant(methodCall);
-
-            return generatedCodeBuilder;
-        };
-    }
-
     private CodeGenProcedure createChainedProcedure(String procedureName, String singleArgumentProcedure) {
         return expressions -> {
             if (expressions.size() == 1) {
-                return createChainedProcedure(singleArgumentProcedure).generateCode(expressions);
+                return createProcedure(singleArgumentProcedure, "%s(new Object[]{%s})").generateCode(expressions);
             } else {
-                return createChainedProcedure(procedureName).generateCode(expressions);
+                return createProcedure(procedureName, "%s(new Object[]{%s})").generateCode(expressions);
             }
         };
     }
@@ -308,7 +292,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
-            procedureMap.put(procedureName, createProcedure(procedureName));
+            procedureMap.put(procedureName, createProcedure(procedureName, "%s(%s)"));
         }
         SchemeParser.ApplicationContext application = lastExpression.application();
         if (application != null) {
@@ -334,7 +318,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
-            procedureMap.put(procedureName, createProcedure(procedureName));
+            procedureMap.put(procedureName, createProcedure(procedureName, "%s(%s)"));
         }
         if (lastExpression.IDENTIFIER() != null) {
             String generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
@@ -342,20 +326,20 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
-            procedureMap.put(procedureName, createProcedure(procedureName));
+            procedureMap.put(procedureName, createProcedure(procedureName, "%s(%s)"));
         }
 
         return codeBuilder;
     }
 
-    private CodeGenProcedure createProcedure(String procedureName) {
+    private CodeGenProcedure createProcedure(String procedureName, String template) {
         return expressions -> {
             GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
             String arguments = expressions.stream()
                     .map(expressionToCode)
                     .map(genCodeBuilder -> genCodeBuilder.getConstant(0))
                     .collect(Collectors.joining(","));
-            generatedCodeBuilder.addConstant(String.format("%s(%s)", procedureName, arguments));
+            generatedCodeBuilder.addConstant(String.format(template, procedureName, arguments));
 
             return generatedCodeBuilder;
         };
