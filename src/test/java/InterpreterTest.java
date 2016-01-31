@@ -275,8 +275,10 @@ public class InterpreterTest {
     @Test
     public void it_is_possible_to_define_recursive_procedures() throws Exception {
         String input = "(define (fib n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2)))))";
+        input += "(define (fac n) (if (equal? n 0) 1 (* n (fac (- n 1)))))";
         input += "(display (fib 20))";
-        assertThat(interpret(input), is("6765\n"));
+        input += "(display (fac 10))";
+        assertThat(interpret(input), is("6765\n3628800\n"));
     }
 
     private String interpret(String input) {
