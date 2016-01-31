@@ -170,29 +170,29 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         String identifier = application.IDENTIFIER().getText();
 
         List<SchemeParser.ExpressionContext> expressions = application.expression();
-        if (procedureMap.containsKey(identifier)) {
+        if ("if".equalsIgnoreCase(identifier)) {
+            if (expressions.size() == 3) {
+                GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+                String methodName = String.format("evaluateIf%d()", methodIndex.getAndIncrement());
+
+                String ifStatement =
+                        String.format("public static Object %s {if(%s){return %s;}else{return %s;}}",
+                                methodName,
+                                expressionToCode.apply(expressions.get(0)).getGeneratedCode(),
+                                expressionToCode.apply(expressions.get(1)).getGeneratedCode(),
+                                expressionToCode.apply(expressions.get(2)).getGeneratedCode());
+
+                codeBuilder.addMethodsToBeDeclared(ifStatement);
+                codeBuilder.setGeneratedCode(methodName);
+
+                return codeBuilder;
+            }
+        } else if (procedureMap.containsKey(identifier)) {
             CodeGenProcedure codeGenProcedure = procedureMap.get(identifier);
 
             return codeGenProcedure.generateCode(expressions);
         } else {
-            if ("if".equalsIgnoreCase(identifier)) {
-                if (expressions.size() == 3) {
-                    GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-                    String methodName = String.format("evaluateIf%d()", methodIndex.getAndIncrement());
-
-                    String ifStatement =
-                            String.format("public static Object %s {if(%s){return %s;}else{return %s;}}",
-                                    methodName,
-                                    expressionToCode.apply(expressions.get(0)).getGeneratedCode(),
-                                    expressionToCode.apply(expressions.get(1)).getGeneratedCode(),
-                                    expressionToCode.apply(expressions.get(2)).getGeneratedCode());
-
-                    codeBuilder.addMethodsToBeDeclared(ifStatement);
-                    codeBuilder.setGeneratedCode(methodName);
-
-                    return codeBuilder;
-                }
-            }
+            return createProcedure(identifier, "%s(%s)").generateCode(expressions);
         }
 
         return new GeneratedCode.GeneratedCodeBuilder();
