@@ -1,4 +1,5 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,6 +22,8 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
     private final Map<String, CodeGenProcedure> procedureMap = new HashMap<>();
 
+    private Map<String, String> substitutions = new HashMap<>();
+
     private final Function<SchemeParser.ExpressionContext, GeneratedCode.GeneratedCodeBuilder> expressionToCode = expression -> {
         GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
         String codeConstant = "";
@@ -31,7 +34,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         }
 
         if (expression.IDENTIFIER() != null) {
-            codeConstant = expression.IDENTIFIER().getText();
+            codeConstant = getIdentifierText(expression.IDENTIFIER());
         }
 
         if (expression.application() != null) {
@@ -167,7 +170,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
     @Override
     public GeneratedCode.GeneratedCodeBuilder visitApplication(SchemeParser.ApplicationContext application) {
-        String identifier = application.IDENTIFIER().getText();
+        String identifier = getIdentifierText(application.IDENTIFIER());
 
         List<SchemeParser.ExpressionContext> expressions = application.expression();
         if ("if".equalsIgnoreCase(identifier)) {
@@ -252,7 +255,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     public GeneratedCode.GeneratedCodeBuilder visitVariable_definition(SchemeParser.Variable_definitionContext variableDefinition) {
         GeneratedCode.GeneratedCodeBuilder generatedCode = new GeneratedCode.GeneratedCodeBuilder();
 
-        String identifier = variableDefinition.IDENTIFIER().getText();
+        String identifier = getIdentifierText(variableDefinition.IDENTIFIER());
         String variableCode = "";
 
         SchemeParser.ExpressionContext expression = variableDefinition.expression();
@@ -265,7 +268,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             variableCode = variableDefinitionForConstant.toString();
         }
         if (expression.IDENTIFIER() != null) {
-            String referencedVariableIdentifier = expression.IDENTIFIER().getText();
+            String referencedVariableIdentifier = getIdentifierText(expression.IDENTIFIER());
 
             if (!identifierToVariableDefinition.containsKey(referencedVariableIdentifier)) {
                 throw new ParseCancellationException(String.format(UNDEFINED_VARIABLE_EXCEPTION_MESSAGE,
@@ -291,7 +294,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 .map(this::visitDefinition)
                 .reduce(new GeneratedCode.GeneratedCodeBuilder(), GeneratedCode.GeneratedCodeBuilder::mergeWith);
 
-        String procedureName = procedureDefinition.proc_name().IDENTIFIER().getText();
+        String procedureName = getIdentifierText(procedureDefinition.proc_name().IDENTIFIER());
         List<SchemeParser.ExpressionContext> expression = procedureDefinition.expression();
 
         procedureMap.put(procedureName, createProcedure(procedureName, "%s(%s)"));
@@ -308,16 +311,23 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             String params = procedureDefinition
                     .param()
                     .stream()
-                    .map(p -> "Object " + p.IDENTIFIER().getText())
+                    .map(p -> "Object " + getIdentifierText(p.IDENTIFIER()))
                     .collect(Collectors.joining(","));
 
             String body;
-            if ("if".equalsIgnoreCase(application.IDENTIFIER().getText())) {
-                List<SchemeParser.ExpressionContext> expressions = application.expression();
-                body = String.format("if(%s){return %s;}else{return %s;}",
-                        expressionToCode.apply(expressions.get(0)).getGeneratedCode(),
-                        expressionToCode.apply(expressions.get(1)).getGeneratedCode(),
-                        expressionToCode.apply(expressions.get(2)).getGeneratedCode());
+            if ("if".equalsIgnoreCase(getIdentifierText(application.IDENTIFIER()))) {
+                Optional<String> optimizedTailRecursion = optimizeTailRecursion(application, procedureName,
+                        procedureDefinition.param());
+
+                if (optimizedTailRecursion.isPresent()) {
+                    body = optimizedTailRecursion.get();
+                } else {
+                    List<SchemeParser.ExpressionContext> expressions = application.expression();
+                    body = String.format("if(%s){return %s;}else{return %s;}",
+                            expressionToCode.apply(expressions.get(0)).getGeneratedCode(),
+                            expressionToCode.apply(expressions.get(1)).getGeneratedCode(),
+                            expressionToCode.apply(expressions.get(2)).getGeneratedCode());
+                }
             } else {
                 body = "return " + visitApplication(application).getGeneratedCode() + ";";
             }
@@ -374,6 +384,83 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     protected GeneratedCode.GeneratedCodeBuilder aggregateResult(GeneratedCode.GeneratedCodeBuilder aggregate,
                                                                  GeneratedCode.GeneratedCodeBuilder nextResult) {
         return aggregate.mergeWith(nextResult);
+    }
+
+    public Optional<String> optimizeTailRecursion(SchemeParser.ApplicationContext application, String procedureName,
+                                                  List<SchemeParser.ParamContext> param) {
+        List<SchemeParser.ExpressionContext> expressions = application.expression();
+
+        SchemeParser.ExpressionContext conditionalExpression = expressions.get(0);
+
+        SchemeParser.ExpressionContext expression1 = expressions.get(1);
+        SchemeParser.ExpressionContext expression2 = expressions.get(2);
+
+        SchemeParser.ApplicationContext tailCall;
+        SchemeParser.ExpressionContext returnExpression;
+
+        boolean negateCondition = false;
+        if (Objects.nonNull(expression1.application())
+                && Objects.equals(procedureName, getIdentifierText(expression1.application().IDENTIFIER()))) {
+            tailCall = expression1.application();
+            returnExpression = expression2;
+        } else if (Objects.nonNull(expression2.application())
+                && Objects.equals(procedureName, getIdentifierText(expression2.application().IDENTIFIER()))) {
+            tailCall = expression2.application();
+            returnExpression = expression1;
+            negateCondition = true;
+        } else {
+            return Optional.empty();
+        }
+
+        String returnStatement = "return " + expressionToCode.apply(returnExpression).getGeneratedCode() + ";";
+
+        List<String> paramNames = param
+                .stream()
+                .map(p -> getIdentifierText(p.IDENTIFIER()))
+                .collect(Collectors.toList());
+
+        for (String paramName : paramNames) {
+            substitutions.put(paramName, String.format("vars[%d]", paramNames.indexOf(paramName)));
+        }
+        List<String> tailCallExpressions = tailCall.expression()
+                .stream()
+                .map(expressionToCode)
+                .map(GeneratedCode.GeneratedCodeBuilder::getGeneratedCode)
+                .collect(Collectors.toList());
+        substitutions.clear();
+
+        String arrayInitialization = "Object[] vars={" + String.join(",", paramNames) + "};";
+
+        if (paramNames.size() != tailCallExpressions.size()) {
+            return Optional.empty();
+        }
+
+        String assignments = createAssignments("%s=%s;", paramNames, tailCallExpressions);
+        for (String paramName : paramNames) {
+            assignments += String.format("vars[%d]=%s;", paramNames.indexOf(paramName), paramName);
+        }
+        String condition = expressionToCode.apply(conditionalExpression).getGeneratedCode();
+
+        String whileTemplate = negateCondition ? "while(!%s){%s}" : "while(%s){%s}";
+        String whileLoop = String.format(whileTemplate,
+                condition,
+                assignments);
+
+        return Optional.of(arrayInitialization + whileLoop + returnStatement);
+    }
+
+    private String getIdentifierText(TerminalNode identifier) {
+        String identifierText = identifier.getText();
+        return substitutions.containsKey(identifierText) ? substitutions.get(identifierText) : identifierText;
+    }
+
+    private String createAssignments(String template, List<String> paramDeclarations,
+                                     List<String> tailCallExpressions) {
+        String initialAssignments = "";
+        for (int i = 0; i < paramDeclarations.size(); i++) {
+            initialAssignments += String.format(template, paramDeclarations.get(i), tailCallExpressions.get(i));
+        }
+        return initialAssignments;
     }
 
     private static class VariableDefinition {

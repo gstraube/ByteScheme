@@ -192,6 +192,49 @@ public class CodeGenVisitorTest {
                         "else{return new String(\"no\");}}"));
     }
 
+    @Test
+    public void recursive_procedures_without_tail_recursion_yield_generated_recursive_methods() {
+        String input = "(define (fac n) (if (equal? n 0) 1 (* n (fac (- n 1)))))";
+        input += "(define (fib n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2)))))";
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(0),
+                Matchers.is("public static Object fac(Object n)" +
+                        "{if(java.util.Objects.equals(n,new BigInteger(\"0\")))" +
+                        "{return new BigInteger(\"1\");}" +
+                        "else{return PredefinedProcedures.multiply(new Object[]{n," +
+                        "fac(PredefinedProcedures.subtract(new Object[]{n,new BigInteger(\"1\")}))});}}"));
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(1),
+                Matchers.is("public static Object fib(Object n)" +
+                        "{if((((BigInteger) n).compareTo(new BigInteger(\"3\")) == -1))" +
+                        "{return new BigInteger(\"1\");}" +
+                        "else{return PredefinedProcedures.add(new Object[]{" +
+                        "fib(PredefinedProcedures.subtract(new Object[]{n,new BigInteger(\"1\")}))," +
+                        "fib(PredefinedProcedures.subtract(new Object[]{n,new BigInteger(\"2\")}))});}}"));
+    }
+
+    @Test
+    public void recursive_procedures_with_tail_recursion_yield_generated_iterative_methods() {
+        String input = "(define (fac_acc n acc) (if (equal? n 0) acc (fac_acc (- n 1) (* n acc))))";
+        input += "(define (fib_acc n acc1 acc2) (if (>= n 3) (fib_acc (- n 1) acc2 (+ acc1 acc2)) acc2))";
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(0),
+                Matchers.is("public static Object fac_acc(Object n,Object acc){" +
+                        "Object[] vars={n,acc};" +
+                        "while(!java.util.Objects.equals(n,new BigInteger(\"0\"))){" +
+                        "n=PredefinedProcedures.subtract(new Object[]{vars[0],new BigInteger(\"1\")});" +
+                        "acc=PredefinedProcedures.multiply(new Object[]{vars[0],vars[1]});" +
+                        "vars[0]=n;vars[1]=acc;}" +
+                        "return acc;}"));
+        assertThat(visitParseTreeForInput(input).getMethodsToBeDeclared().get(1),
+                Matchers.is("public static Object fib_acc(Object n,Object acc1,Object acc2){" +
+                        "Object[] vars={n,acc1,acc2};" +
+                        "while((((BigInteger) n).compareTo(new BigInteger(\"3\")) == 1" +
+                        "||((BigInteger) n).compareTo(new BigInteger(\"3\")) == 0)){" +
+                        "n=PredefinedProcedures.subtract(new Object[]{vars[0],new BigInteger(\"1\")});" +
+                        "acc1=vars[2];" +
+                        "acc2=PredefinedProcedures.add(new Object[]{vars[1],vars[2]});" +
+                        "vars[0]=n;vars[1]=acc1;vars[2]=acc2;}" +
+                        "return acc2;}"));
+    }
+
     private GeneratedCode visitParseTreeForInput(String input) {
         ANTLRInputStream inputStream = new ANTLRInputStream(input);
         SchemeLexer lexer = new SchemeLexer(inputStream);
