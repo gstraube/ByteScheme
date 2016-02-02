@@ -392,33 +392,69 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
         SchemeParser.ExpressionContext conditionalExpression = expressions.get(0);
 
-        SchemeParser.ExpressionContext expression1 = expressions.get(1);
-        SchemeParser.ExpressionContext expression2 = expressions.get(2);
-
-        SchemeParser.ApplicationContext tailCall;
-        SchemeParser.ExpressionContext returnExpression;
-
-        boolean negateCondition = false;
-        if (Objects.nonNull(expression1.application())
-                && Objects.equals(procedureName, getIdentifierText(expression1.application().IDENTIFIER()))) {
-            tailCall = expression1.application();
-            returnExpression = expression2;
-        } else if (Objects.nonNull(expression2.application())
-                && Objects.equals(procedureName, getIdentifierText(expression2.application().IDENTIFIER()))) {
-            tailCall = expression2.application();
-            returnExpression = expression1;
-            negateCondition = true;
-        } else {
+        Optional<ProcedureStructure> procedureStructure = constructProcedureStructure(procedureName, expressions);
+        if (!procedureStructure.isPresent()) {
             return Optional.empty();
         }
 
-        String returnStatement = "return " + expressionToCode.apply(returnExpression).getGeneratedCode() + ";";
+        String returnStatement = "return "
+                + expressionToCode.apply(procedureStructure.get().returnExpression).getGeneratedCode() + ";";
 
-        List<String> paramNames = param
+        List<String> paramNames = getParamNames(param);
+        List<String> tailCallExpressions = getTailCallExpressions(procedureStructure.get().tailCall, paramNames);
+
+        String arrayInitialization = "Object[] vars={" + String.join(",", paramNames) + "};";
+
+        if (paramNames.size() != tailCallExpressions.size()) {
+            return Optional.empty();
+        }
+
+        String whileLoop = createWhileLoop(conditionalExpression, procedureStructure.get().negateCondition,
+                paramNames, tailCallExpressions);
+
+        return Optional.of(arrayInitialization + whileLoop + returnStatement);
+    }
+
+    private Optional<ProcedureStructure> constructProcedureStructure(String procedureName, List<SchemeParser.ExpressionContext> expressions) {
+        SchemeParser.ExpressionContext expression1 = expressions.get(1);
+        SchemeParser.ExpressionContext expression2 = expressions.get(2);
+
+        boolean isFirstExpressionTailCall = Objects.nonNull(expression1.application())
+                && Objects.equals(procedureName, getIdentifierText(expression1.application().IDENTIFIER()));
+        boolean isSecondExpressionTailCall = Objects.nonNull(expression2.application())
+                && Objects.equals(procedureName, getIdentifierText(expression2.application().IDENTIFIER()));
+
+        if (isFirstExpressionTailCall) {
+            return Optional.of(new ProcedureStructure(false, expression1.application(), expression2));
+        } else if (isSecondExpressionTailCall) {
+            return Optional.of(new ProcedureStructure(true, expression2.application(), expression1));
+        }
+
+        return Optional.empty();
+    }
+
+    private String createWhileLoop(SchemeParser.ExpressionContext conditionalExpression, boolean negateCondition,
+                                   List<String> paramNames, List<String> tailCallExpressions) {
+        String assignments = createAssignments("%s=%s;", paramNames, tailCallExpressions);
+        for (String paramName : paramNames) {
+            assignments += String.format("vars[%d]=%s;", paramNames.indexOf(paramName), paramName);
+        }
+        String condition = expressionToCode.apply(conditionalExpression).getGeneratedCode();
+
+        String whileTemplate = negateCondition ? "while(!%s){%s}" : "while(%s){%s}";
+        return String.format(whileTemplate,
+                condition,
+                assignments);
+    }
+
+    private List<String> getParamNames(List<SchemeParser.ParamContext> param) {
+        return param
                 .stream()
                 .map(p -> getIdentifierText(p.IDENTIFIER()))
                 .collect(Collectors.toList());
+    }
 
+    private List<String> getTailCallExpressions(SchemeParser.ApplicationContext tailCall, List<String> paramNames) {
         for (String paramName : paramNames) {
             substitutions.put(paramName, String.format("vars[%d]", paramNames.indexOf(paramName)));
         }
@@ -428,25 +464,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 .map(GeneratedCode.GeneratedCodeBuilder::getGeneratedCode)
                 .collect(Collectors.toList());
         substitutions.clear();
-
-        String arrayInitialization = "Object[] vars={" + String.join(",", paramNames) + "};";
-
-        if (paramNames.size() != tailCallExpressions.size()) {
-            return Optional.empty();
-        }
-
-        String assignments = createAssignments("%s=%s;", paramNames, tailCallExpressions);
-        for (String paramName : paramNames) {
-            assignments += String.format("vars[%d]=%s;", paramNames.indexOf(paramName), paramName);
-        }
-        String condition = expressionToCode.apply(conditionalExpression).getGeneratedCode();
-
-        String whileTemplate = negateCondition ? "while(!%s){%s}" : "while(%s){%s}";
-        String whileLoop = String.format(whileTemplate,
-                condition,
-                assignments);
-
-        return Optional.of(arrayInitialization + whileLoop + returnStatement);
+        return tailCallExpressions;
     }
 
     private String getIdentifierText(TerminalNode identifier) {
@@ -536,6 +554,20 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
     interface CodeGenProcedure {
         GeneratedCode.GeneratedCodeBuilder generateCode(List<SchemeParser.ExpressionContext> expression);
+    }
+
+    private static class ProcedureStructure {
+        private final boolean negateCondition;
+        private final SchemeParser.ApplicationContext tailCall;
+        private final SchemeParser.ExpressionContext returnExpression;
+
+        private ProcedureStructure(boolean negateCondition, SchemeParser.ApplicationContext tailCall,
+                                   SchemeParser.ExpressionContext returnExpression) {
+            this.negateCondition = negateCondition;
+            this.tailCall = tailCall;
+            this.returnExpression = returnExpression;
+        }
+
     }
 
 }
