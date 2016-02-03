@@ -10,162 +10,43 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
     private static final String UNDEFINED_VARIABLE_EXCEPTION_MESSAGE = "Undefined variable '%s'";
 
-    private static final String DISPLAY_PROCEDURE_NAME = "display";
-    private static final String LIST_PROCEDURE_NAME = "list";
-    private static final String CAR_PROCEDURE_NAME = "car";
-    private static final String CDR_PROCEDURE_NAME = "cdr";
-    private static final int LESS_THAN = -1;
-    private static final int EQUAL = 0;
-    private static final int GREATER_THAN = 1;
-
     private static AtomicInteger methodIndex = new AtomicInteger(0);
 
-    private final Map<String, CodeGenProcedure> procedureMap = new HashMap<>();
+    private final Map<String, CodeGenProcedure> procedureMap;
 
     private Map<String, String> substitutions = new HashMap<>();
 
-    private final Function<SchemeParser.ExpressionContext, GeneratedCode.GeneratedCodeBuilder> expressionToCode = expression -> {
-        GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-        String codeConstant = "";
+    public Function<SchemeParser.ExpressionContext, GeneratedCode.GeneratedCodeBuilder> expressionToCode() {
+        return expression -> {
+            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
+            String codeConstant = "";
 
-        if (expression.constant() != null) {
-            String constant = visitConstant(expression.constant()).getGeneratedCode();
-            codeConstant = constant.substring(0, constant.length() - 1);
-        }
+            if (expression.constant() != null) {
+                String constant = visitConstant(expression.constant()).getGeneratedCode();
+                codeConstant = constant.substring(0, constant.length() - 1);
+            }
 
-        if (expression.IDENTIFIER() != null) {
-            codeConstant = getIdentifierText(expression.IDENTIFIER());
-        }
+            if (expression.IDENTIFIER() != null) {
+                codeConstant = getIdentifierText(expression.IDENTIFIER());
+            }
 
-        if (expression.application() != null) {
-            GeneratedCode.GeneratedCodeBuilder genCodeBuilder = visitApplication(expression.application());
-            codeConstant = genCodeBuilder.getGeneratedCode();
-            codeBuilder = codeBuilder.mergeWith(genCodeBuilder);
-        }
+            if (expression.application() != null) {
+                GeneratedCode.GeneratedCodeBuilder genCodeBuilder = visitApplication(expression.application());
+                codeConstant = genCodeBuilder.getGeneratedCode();
+                codeBuilder = codeBuilder.mergeWith(genCodeBuilder);
+            }
 
-        codeBuilder.setGeneratedCode(codeConstant);
+            codeBuilder.setGeneratedCode(codeConstant);
 
-        return codeBuilder;
-    };
+            return codeBuilder;
+        };
+    }
 
     private Map<String, VariableDefinition> identifierToVariableDefinition = new HashMap<>();
 
     public CodeGenVisitor() {
-        procedureMap.put(DISPLAY_PROCEDURE_NAME, expressions -> {
-            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-
-            if (expressions.size() == 1) {
-                SchemeParser.ExpressionContext argument = expressions.get(0);
-
-                String mainMethodStatement = "System.out.println(OutputFormatter.output(%s));";
-                GeneratedCode.GeneratedCodeBuilder genCodeBuilder = expressionToCode.apply(argument);
-                codeBuilder.addStatementsToMainMethod(String.format(mainMethodStatement,
-                        genCodeBuilder.getGeneratedCode()));
-
-                codeBuilder = codeBuilder.mergeWith(genCodeBuilder);
-            }
-
-            return codeBuilder;
-        });
-
-        procedureMap.put(LIST_PROCEDURE_NAME, expressions -> {
-            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-
-            String listCode;
-            if (expressions.size() == 0) {
-                listCode = "ListWrapper.fromElements(new Object[0])";
-            } else {
-                String listArguments = expressions.stream()
-                        .map(expressionToCode)
-                        .map(GeneratedCode.GeneratedCodeBuilder::getGeneratedCode)
-                        .collect(Collectors.joining(","));
-                listCode = String.format("ListWrapper.fromElements(new Object[]{%s})", listArguments);
-            }
-            codeBuilder.setGeneratedCode(listCode);
-
-            return codeBuilder;
-        });
-
-        procedureMap.put(CAR_PROCEDURE_NAME, createListProcedure("car"));
-        procedureMap.put(CDR_PROCEDURE_NAME, createListProcedure("cdr"));
-
-        procedureMap.put("+", createProcedure("PredefinedProcedures.add", "%s(new Object[]{%s})"));
-        procedureMap.put("-", createChainedProcedure("PredefinedProcedures.subtract", "PredefinedProcedures.negate"));
-        procedureMap.put("*", createProcedure("PredefinedProcedures.multiply", "%s(new Object[]{%s})"));
-        procedureMap.put("quotient", createProcedure("PredefinedProcedures.divide", "%s(new Object[]{%s})"));
-        procedureMap.put("<", createComparisonProcedure(LESS_THAN));
-        procedureMap.put("<=", createComparisonProcedure(LESS_THAN, EQUAL));
-        procedureMap.put(">", createComparisonProcedure(GREATER_THAN));
-        procedureMap.put(">=", createComparisonProcedure(GREATER_THAN, EQUAL));
-
-        procedureMap.put("equal?", expressions -> {
-            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-
-            if (expressions.size() == 2) {
-                String firstArgument = expressionToCode.apply(expressions.get(0)).getGeneratedCode();
-                String secondArgument = expressionToCode.apply(expressions.get(1)).getGeneratedCode();
-
-                codeBuilder.setGeneratedCode(String.format("java.util.Objects.equals(%s,%s)", firstArgument, secondArgument));
-            }
-
-            return codeBuilder;
-        });
-    }
-
-    private CodeGenProcedure createListProcedure(String procedureName) {
-        return expressions -> {
-            GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-
-            if (expressions.size() == 1) {
-                if (expressions.get(0).application() != null) {
-                    String list = visitApplication(expressions.get(0).application()).getGeneratedCode();
-
-                    codeBuilder.setGeneratedCode(String.format("%s.%s()", list, procedureName));
-                }
-            }
-
-            return codeBuilder;
-        };
-    }
-
-    private CodeGenProcedure createComparisonProcedure(Integer... expectedResults) {
-        return expressions -> {
-            GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
-            List<Integer> results = Arrays.asList(expectedResults);
-            List<String> comparisons = new ArrayList<>();
-
-            for (int current = 0; current < expressions.size() - 1; current++) {
-                int next = current + 1;
-                String compareTo = String.format("((BigInteger) %s).compareTo(%s)",
-                        expressionToCode.apply(expressions.get(current)).getGeneratedCode(),
-                        expressionToCode.apply(expressions.get(next)).getGeneratedCode());
-
-                String comparison = results
-                        .stream()
-                        .map(expectedResult -> String.format("%s == %d", compareTo, expectedResult))
-                        .collect(Collectors.joining("||"));
-
-                comparisons.add(comparison);
-            }
-
-            String completeComparison = comparisons
-                    .stream()
-                    .collect(Collectors.joining("&&", "(", ")"));
-
-            generatedCodeBuilder.setGeneratedCode(completeComparison);
-
-            return generatedCodeBuilder;
-        };
-    }
-
-    private CodeGenProcedure createChainedProcedure(String procedureName, String singleArgumentProcedure) {
-        return expressions -> {
-            if (expressions.size() == 1) {
-                return createProcedure(singleArgumentProcedure, "%s(new Object[]{%s})").generateCode(expressions);
-            } else {
-                return createProcedure(procedureName, "%s(new Object[]{%s})").generateCode(expressions);
-            }
-        };
+        ProcedureMapInitializer procedureMapInitializer = new ProcedureMapInitializer(this);
+        procedureMap = procedureMapInitializer.getInitialMap();
     }
 
     @Override
@@ -181,9 +62,9 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 String ifStatement =
                         String.format("public static Object %s {if(%s){return %s;}else{return %s;}}",
                                 methodName,
-                                expressionToCode.apply(expressions.get(0)).getGeneratedCode(),
-                                expressionToCode.apply(expressions.get(1)).getGeneratedCode(),
-                                expressionToCode.apply(expressions.get(2)).getGeneratedCode());
+                                expressionToCode().apply(expressions.get(0)).getGeneratedCode(),
+                                expressionToCode().apply(expressions.get(1)).getGeneratedCode(),
+                                expressionToCode().apply(expressions.get(2)).getGeneratedCode());
 
                 codeBuilder.addMethodsToBeDeclared(ifStatement);
                 codeBuilder.setGeneratedCode(methodName);
@@ -304,7 +185,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         String generatedMethod = "";
         if (lastExpression.constant() != null) {
             generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
-                    expressionToCode.apply(lastExpression).getGeneratedCode());
+                    expressionToCode().apply(lastExpression).getGeneratedCode());
         }
         SchemeParser.ApplicationContext application = lastExpression.application();
         if (application != null) {
@@ -324,9 +205,9 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                 } else {
                     List<SchemeParser.ExpressionContext> expressions = application.expression();
                     body = String.format("if(%s){return %s;}else{return %s;}",
-                            expressionToCode.apply(expressions.get(0)).getGeneratedCode(),
-                            expressionToCode.apply(expressions.get(1)).getGeneratedCode(),
-                            expressionToCode.apply(expressions.get(2)).getGeneratedCode());
+                            expressionToCode().apply(expressions.get(0)).getGeneratedCode(),
+                            expressionToCode().apply(expressions.get(1)).getGeneratedCode(),
+                            expressionToCode().apply(expressions.get(2)).getGeneratedCode());
                 }
             } else {
                 body = "return " + visitApplication(application).getGeneratedCode() + ";";
@@ -337,7 +218,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         }
         if (lastExpression.IDENTIFIER() != null) {
             generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
-                    expressionToCode.apply(lastExpression).getGeneratedCode());
+                    expressionToCode().apply(lastExpression).getGeneratedCode());
         }
 
         codeBuilder.addMethodsToBeDeclared(generatedMethod);
@@ -345,11 +226,11 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         return codeBuilder;
     }
 
-    private CodeGenProcedure createProcedure(String procedureName, String template) {
+    public CodeGenProcedure createProcedure(String procedureName, String template) {
         return expressions -> {
             GeneratedCode.GeneratedCodeBuilder generatedCodeBuilder = new GeneratedCode.GeneratedCodeBuilder();
             String arguments = expressions.stream()
-                    .map(expressionToCode)
+                    .map(expressionToCode())
                     .map(GeneratedCode.GeneratedCodeBuilder::getGeneratedCode)
                     .collect(Collectors.joining(","));
             generatedCodeBuilder.setGeneratedCode(String.format(template, procedureName, arguments));
@@ -398,7 +279,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         }
 
         String returnStatement = "return "
-                + expressionToCode.apply(procedureStructure.get().returnExpression).getGeneratedCode() + ";";
+                + expressionToCode().apply(procedureStructure.get().returnExpression).getGeneratedCode() + ";";
 
         List<String> paramNames = getParamNames(param);
         List<String> tailCallExpressions = getTailCallExpressions(procedureStructure.get().tailCall, paramNames);
@@ -439,7 +320,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         for (String paramName : paramNames) {
             assignments += String.format("vars[%d]=%s;", paramNames.indexOf(paramName), paramName);
         }
-        String condition = expressionToCode.apply(conditionalExpression).getGeneratedCode();
+        String condition = expressionToCode().apply(conditionalExpression).getGeneratedCode();
 
         String whileTemplate = negateCondition ? "while(!%s){%s}" : "while(%s){%s}";
         return String.format(whileTemplate,
@@ -460,7 +341,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         }
         List<String> tailCallExpressions = tailCall.expression()
                 .stream()
-                .map(expressionToCode)
+                .map(expressionToCode())
                 .map(GeneratedCode.GeneratedCodeBuilder::getGeneratedCode)
                 .collect(Collectors.toList());
         substitutions.clear();
@@ -550,10 +431,6 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         private enum VariableType {
             BIG_INTEGER, CHAR, STRING, BOOLEAN
         }
-    }
-
-    interface CodeGenProcedure {
-        GeneratedCode.GeneratedCodeBuilder generateCode(List<SchemeParser.ExpressionContext> expression);
     }
 
     private static class ProcedureStructure {
