@@ -21,16 +21,16 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
             String codeConstant = "";
 
-            if (expression.constant() != null) {
+            if (isConstant(expression)) {
                 String constant = visitConstant(expression.constant()).getGeneratedCode();
                 codeConstant = constant.substring(0, constant.length() - 1);
             }
 
-            if (expression.IDENTIFIER() != null) {
+            if (isIdentifier(expression)) {
                 codeConstant = getIdentifierText(expression.IDENTIFIER());
             }
 
-            if (expression.application() != null) {
+            if (isApplication(expression)) {
                 GeneratedCode.GeneratedCodeBuilder genCodeBuilder = visitApplication(expression.application());
                 codeConstant = genCodeBuilder.getGeneratedCode();
                 codeBuilder = codeBuilder.mergeWith(genCodeBuilder);
@@ -87,10 +87,10 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         GeneratedCode.GeneratedCodeBuilder codeBuilder = new GeneratedCode.GeneratedCodeBuilder();
 
         String constantCode = "";
-        if (constant.NUMBER() != null) {
+        if (isNumber(constant)) {
             constantCode = String.format("new BigInteger(\"%s\");", constant.NUMBER().getText());
         }
-        if (constant.CHARACTER() != null) {
+        if (isCharacter(constant)) {
             char containedChar;
 
             String characterText = constant.CHARACTER().getText().substring(2);
@@ -114,10 +114,10 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             String formattedString = String.format("new Character('%c');", containedChar);
             constantCode = formattedString.replace("\n", "\\n");
         }
-        if (constant.STRING() != null) {
+        if (isString(constant)) {
             constantCode = String.format("new String(%s);", constant.STRING().getText());
         }
-        if (constant.BOOLEAN() != null) {
+        if (isBoolean(constant)) {
             constantCode = String.format("new Boolean(%b);", "#t".equals(constant.BOOLEAN().getText()));
         }
 
@@ -128,7 +128,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
     @Override
     public GeneratedCode.GeneratedCodeBuilder visitDefinition(SchemeParser.DefinitionContext definition) {
-        return definition.variable_definition() != null ? visitVariable_definition(definition.variable_definition()) :
+        return isVariableDefinition(definition) ? visitVariable_definition(definition.variable_definition()) :
                 visitProcedure_definition(definition.procedure_definition());
     }
 
@@ -140,7 +140,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         String variableCode = "";
 
         SchemeParser.ExpressionContext expression = variableDefinition.expression();
-        if (expression.constant() != null) {
+        if (isConstant(expression)) {
             VariableDefinition variableDefinitionForConstant = createVariableDefinitionForConstant(identifier,
                     expression.constant());
             identifierToVariableDefinition.put(identifier, variableDefinitionForConstant);
@@ -148,7 +148,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
 
             variableCode = variableDefinitionForConstant.toString();
         }
-        if (expression.IDENTIFIER() != null) {
+        if (isIdentifier(expression)) {
             String referencedVariableIdentifier = getIdentifierText(expression.IDENTIFIER());
 
             if (!identifierToVariableDefinition.containsKey(referencedVariableIdentifier)) {
@@ -183,12 +183,12 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         SchemeParser.ExpressionContext lastExpression = expression.get(expression.size() - 1);
 
         String generatedMethod = "";
-        if (lastExpression.constant() != null) {
+        if (isConstant(lastExpression)) {
             generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
                     expressionToCode().apply(lastExpression).getGeneratedCode());
         }
-        SchemeParser.ApplicationContext application = lastExpression.application();
-        if (application != null) {
+        if (isApplication(lastExpression)) {
+            SchemeParser.ApplicationContext application = lastExpression.application();
             String params = procedureDefinition
                     .param()
                     .stream()
@@ -200,7 +200,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             generatedMethod = String.format("public static Object %s(%s){%s}",
                     procedureName, params, body);
         }
-        if (lastExpression.IDENTIFIER() != null) {
+        if (isIdentifier(lastExpression)) {
             generatedMethod = String.format("public static Object %s(){return %s;}", procedureName,
                     expressionToCode().apply(lastExpression).getGeneratedCode());
         }
@@ -248,13 +248,13 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                                                                    SchemeParser.ConstantContext constant) {
         String text = visitConstant(constant).getGeneratedCode();
 
-        if (constant.NUMBER() != null) {
+        if (isNumber(constant)) {
             return VariableDefinition.createForBigInteger(identifier, text);
         }
-        if (constant.CHARACTER() != null) {
+        if (isCharacter(constant)) {
             return VariableDefinition.createForChar(identifier, text);
         }
-        if (constant.STRING() != null) {
+        if (isString(constant)) {
             return VariableDefinition.createForString(identifier, text);
         }
 
@@ -365,6 +365,38 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
             initialAssignments += String.format(template, paramDeclarations.get(i), tailCallExpressions.get(i));
         }
         return initialAssignments;
+    }
+
+    private static boolean isApplication(SchemeParser.ExpressionContext expression) {
+        return expression.application() != null;
+    }
+
+    private static boolean isIdentifier(SchemeParser.ExpressionContext expression) {
+        return expression.IDENTIFIER() != null;
+    }
+
+    private static boolean isConstant(SchemeParser.ExpressionContext expression) {
+        return expression.constant() != null;
+    }
+
+    private static boolean isCharacter(SchemeParser.ConstantContext constant) {
+        return constant.CHARACTER() != null;
+    }
+
+    private static boolean isBoolean(SchemeParser.ConstantContext constant) {
+        return constant.BOOLEAN() != null;
+    }
+
+    private static boolean isString(SchemeParser.ConstantContext constant) {
+        return constant.STRING() != null;
+    }
+
+    private static boolean isNumber(SchemeParser.ConstantContext constant) {
+        return constant.NUMBER() != null;
+    }
+
+    private static boolean isVariableDefinition(SchemeParser.DefinitionContext definition) {
+        return definition.variable_definition() != null;
     }
 
     private static class ProcedureStructure {
