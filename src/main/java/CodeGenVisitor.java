@@ -195,23 +195,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                     .map(p -> "Object " + getIdentifierText(p.IDENTIFIER()))
                     .collect(Collectors.joining(","));
 
-            String body;
-            if ("if".equalsIgnoreCase(getIdentifierText(application.IDENTIFIER()))) {
-                Optional<String> optimizedTailRecursion = optimizeTailRecursion(application, procedureName,
-                        procedureDefinition.param());
-
-                if (optimizedTailRecursion.isPresent()) {
-                    body = optimizedTailRecursion.get();
-                } else {
-                    List<SchemeParser.ExpressionContext> expressions = application.expression();
-                    body = String.format("if(%s){return %s;}else{return %s;}",
-                            expressionToCode().apply(expressions.get(0)).getGeneratedCode(),
-                            expressionToCode().apply(expressions.get(1)).getGeneratedCode(),
-                            expressionToCode().apply(expressions.get(2)).getGeneratedCode());
-                }
-            } else {
-                body = "return " + visitApplication(application).getGeneratedCode() + ";";
-            }
+            String body = constructProcedureBody(procedureDefinition, procedureName, application);
 
             generatedMethod = String.format("public static Object %s(%s){%s}",
                     procedureName, params, body);
@@ -224,6 +208,27 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         codeBuilder.addMethodsToBeDeclared(generatedMethod);
 
         return codeBuilder;
+    }
+
+    private String constructProcedureBody(SchemeParser.Procedure_definitionContext procedureDefinition, String procedureName, SchemeParser.ApplicationContext application) {
+        String body;
+        if ("if".equalsIgnoreCase(getIdentifierText(application.IDENTIFIER()))) {
+            Optional<String> optimizedTailRecursion = optimizeTailRecursion(application, procedureName,
+                    procedureDefinition.param());
+
+            if (optimizedTailRecursion.isPresent()) {
+                body = optimizedTailRecursion.get();
+            } else {
+                List<SchemeParser.ExpressionContext> expressions = application.expression();
+                body = String.format("if(%s){return %s;}else{return %s;}",
+                        expressionToCode().apply(expressions.get(0)).getGeneratedCode(),
+                        expressionToCode().apply(expressions.get(1)).getGeneratedCode(),
+                        expressionToCode().apply(expressions.get(2)).getGeneratedCode());
+            }
+        } else {
+            body = "return " + visitApplication(application).getGeneratedCode() + ";";
+        }
+        return body;
     }
 
     public CodeGenProcedure createProcedure(String procedureName, String template) {
