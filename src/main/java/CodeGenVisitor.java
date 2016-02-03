@@ -368,35 +368,35 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
     }
 
     private static boolean isApplication(SchemeParser.ExpressionContext expression) {
-        return expression.application() != null;
+        return Objects.nonNull(expression.application());
     }
 
     private static boolean isIdentifier(SchemeParser.ExpressionContext expression) {
-        return expression.IDENTIFIER() != null;
+        return Objects.nonNull(expression.IDENTIFIER());
     }
 
     private static boolean isConstant(SchemeParser.ExpressionContext expression) {
-        return expression.constant() != null;
+        return Objects.nonNull(expression.constant());
     }
 
     private static boolean isCharacter(SchemeParser.ConstantContext constant) {
-        return constant.CHARACTER() != null;
+        return Objects.nonNull(constant.CHARACTER());
     }
 
     private static boolean isBoolean(SchemeParser.ConstantContext constant) {
-        return constant.BOOLEAN() != null;
+        return Objects.nonNull(constant.BOOLEAN());
     }
 
     private static boolean isString(SchemeParser.ConstantContext constant) {
-        return constant.STRING() != null;
+        return Objects.nonNull(constant.STRING());
     }
 
     private static boolean isNumber(SchemeParser.ConstantContext constant) {
-        return constant.NUMBER() != null;
+        return Objects.nonNull(constant.NUMBER());
     }
 
     private static boolean isVariableDefinition(SchemeParser.DefinitionContext definition) {
-        return definition.variable_definition() != null;
+        return Objects.nonNull(definition.variable_definition());
     }
 
     private static class ProcedureStructure {
