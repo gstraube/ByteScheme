@@ -260,11 +260,18 @@ public class InterpreterTest {
     }
 
     @Test
-    public void a_procedure_can_call_other_procedures_in_its_body() throws Exception {
+    public void a_procedure_can_call_predefined_procedures_in_its_body() throws Exception {
         String input = "(define (double_arg x) (* x 2)) (display (double_arg 12))";
         input += "(define (square_and_add x y) (+ (* x x) (* y y))) (display (square_and_add 3 4))";
         input += "(define (add x y) (+ x y)) (define (add_1 x) (add x 1)) (display (add_1 6))";
         assertThat(interpret(input), is("24\n25\n7\n"));
+    }
+
+    @Test
+    public void a_procedure_can_refer_to_other_procedures_defined_within_the_same_program() {
+        String input = "(define (double_arg x) (multiply x 2)) (display (double_arg 12))";
+        input += "(define (multiply x y) (* x y))";
+        assertThat(interpret(input), is("24\n"));
     }
 
     @Test

@@ -66,7 +66,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                                 expressionToCode().apply(expressions.get(1)).getGeneratedCode(),
                                 expressionToCode().apply(expressions.get(2)).getGeneratedCode());
 
-                codeBuilder.addMethodsToBeDeclared(ifStatement);
+                codeBuilder.addMethodToBeDeclared(methodName, ifStatement);
                 codeBuilder.setGeneratedCode(methodName);
 
                 return codeBuilder;
@@ -189,6 +189,11 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
         }
         if (isApplication(lastExpression)) {
             SchemeParser.ApplicationContext application = lastExpression.application();
+
+            if (!procedureMap.containsKey(application.IDENTIFIER().getText())) {
+                codeBuilder.addMethodToBeDeclared(application.IDENTIFIER().getText());
+            }
+
             String params = procedureDefinition
                     .param()
                     .stream()
@@ -205,7 +210,7 @@ public class CodeGenVisitor extends SchemeBaseVisitor<GeneratedCode.GeneratedCod
                     expressionToCode().apply(lastExpression).getGeneratedCode());
         }
 
-        codeBuilder.addMethodsToBeDeclared(generatedMethod);
+        codeBuilder.addMethodToBeDeclared(procedureName, generatedMethod);
 
         return codeBuilder;
     }

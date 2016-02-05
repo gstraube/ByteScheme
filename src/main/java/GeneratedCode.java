@@ -1,6 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class GeneratedCode {
@@ -31,7 +29,7 @@ public class GeneratedCode {
     public static class GeneratedCodeBuilder {
 
         private List<String> mainMethod = new ArrayList<>();
-        private List<String> methodsToBeDeclared = new ArrayList<>();
+        private Map<String, Optional<String>> methodsToBeDeclared = new LinkedHashMap<>();
         private List<String> variableDefinitions = new ArrayList<>();
         private String generatedCode;
 
@@ -40,18 +38,19 @@ public class GeneratedCode {
             return this;
         }
 
-        public GeneratedCodeBuilder addMethodsToBeDeclared(String... methodsToBeDeclared) {
-            this.methodsToBeDeclared.addAll(Arrays.asList(methodsToBeDeclared));
-            return this;
-        }
-
         public GeneratedCode build() {
             mainMethod.add(0, "public static void main(String[] args){");
             mainMethod.add("}");
 
-            methodsToBeDeclared.add(mainMethod.stream().collect(Collectors.joining()));
+            List<String> methods = new ArrayList<>();
 
-            return new GeneratedCode(methodsToBeDeclared, variableDefinitions, generatedCode);
+            methodsToBeDeclared.values()
+                    .stream()
+                    .filter(Optional::isPresent)
+                    .forEach(method -> methods.add(method.get()));
+            methods.add(mainMethod.stream().collect(Collectors.joining()));
+
+            return new GeneratedCode(methods, variableDefinitions, generatedCode);
         }
 
         public GeneratedCodeBuilder setGeneratedCode(String generatedCode) {
@@ -78,8 +77,8 @@ public class GeneratedCode {
             merged.variableDefinitions.addAll(variableDefinitions);
             merged.variableDefinitions.addAll(other.variableDefinitions);
 
-            merged.methodsToBeDeclared.addAll(methodsToBeDeclared);
-            merged.methodsToBeDeclared.addAll(other.methodsToBeDeclared);
+            merged.methodsToBeDeclared.putAll(methodsToBeDeclared);
+            merged.methodsToBeDeclared.putAll(other.methodsToBeDeclared);
 
             merged.mainMethod.addAll(mainMethod);
             merged.mainMethod.addAll(other.mainMethod);
@@ -92,6 +91,19 @@ public class GeneratedCode {
 
             return this;
         }
+
+        public GeneratedCodeBuilder addMethodToBeDeclared(String generatedMethod) {
+            methodsToBeDeclared.put(generatedMethod, Optional.empty());
+
+            return this;
+        }
+
+        public GeneratedCodeBuilder addMethodToBeDeclared(String procedureName, String generatedMethod) {
+            methodsToBeDeclared.put(procedureName, Optional.of(generatedMethod));
+
+            return this;
+        }
+
     }
 
 }

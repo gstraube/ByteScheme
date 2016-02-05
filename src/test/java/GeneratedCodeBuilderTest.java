@@ -21,7 +21,7 @@ public class GeneratedCodeBuilderTest {
 
         GeneratedCode generatedCode = generatedCodeBuilder
                 .addVariableDefinitions("String aString = \"a string\";", "boolean a = false;")
-                .addMethodsToBeDeclared("public String someMethod(){return \"a value\"}")
+                .addMethodToBeDeclared("someMethod", "public String someMethod(){return \"a value\"}")
                 .build();
 
         assertThat(generatedCode.getVariableDefinitions().size(), is(2));
