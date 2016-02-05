@@ -44,13 +44,11 @@ public class GeneratedCodeBuilderTest {
                         "System.out.println(OutputFormatter.output(var));")
                 .build();
 
-        StringBuilder expectedOutput = new StringBuilder();
-        expectedOutput.append("public static void main(String[] args){");
-        expectedOutput.append("String var = \"a string\";");
-        expectedOutput.append("System.out.println(OutputFormatter.output(var));");
-        expectedOutput.append("}");
+        String expectedOutput = "public static void main(String[] args){";
+        expectedOutput += "String var = \"a string\";";
+        expectedOutput += "System.out.println(OutputFormatter.output(var));}";
 
-        assertThat(generatedCode.getMethodsToBeDeclared().get(0), is(expectedOutput.toString()));
+        assertThat(generatedCode.getMethodsToBeDeclared().get(0), is(expectedOutput));
     }
 
 }
