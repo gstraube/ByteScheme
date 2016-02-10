@@ -62,20 +62,20 @@ public class Compiler {
         manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, "Main");
         FileOutputStream fileOutputStream = new FileOutputStream(jarFile);
         JarOutputStream jarOut = new JarOutputStream(fileOutputStream, manifest);
-        jarOut.putNextEntry(new ZipEntry("Main.class"));
-        jarOut.write(mainClassCt.toBytecode());
-        jarOut.closeEntry();
-        jarOut.putNextEntry(new ZipEntry("runtime/OutputFormatter.class"));
-        jarOut.write(pool.get("runtime.OutputFormatter").toBytecode());
-        jarOut.closeEntry();
-        jarOut.putNextEntry(new ZipEntry("runtime/PredefinedProcedures.class"));
-        jarOut.write(pool.get("runtime.PredefinedProcedures").toBytecode());
-        jarOut.closeEntry();
-        jarOut.putNextEntry(new ZipEntry("lang/ListWrapper.class"));
-        jarOut.write(pool.get("lang.ListWrapper").toBytecode());
-        jarOut.closeEntry();
+        addEntryToJar(jarOut, "Main.class", mainClassCt.toBytecode());
+        addEntryToJar(jarOut, "runtime/OutputFormatter.class", pool.get("runtime.OutputFormatter").toBytecode());
+        addEntryToJar(jarOut, "runtime/PredefinedProcedures.class",
+                pool.get("runtime.PredefinedProcedures").toBytecode());
+        addEntryToJar(jarOut, "lang/ListWrapper.class", pool.get("lang.ListWrapper").toBytecode());
         jarOut.close();
         fileOutputStream.close();
+    }
+
+    private void addEntryToJar(JarOutputStream jarOut, String entryPath, byte[] byteCode)
+            throws IOException, CannotCompileException, NotFoundException {
+        jarOut.putNextEntry(new ZipEntry(entryPath));
+        jarOut.write(byteCode);
+        jarOut.closeEntry();
     }
 
     private GeneratedCode visitParseTreeForInput(String input) {
