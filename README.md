@@ -8,7 +8,7 @@ Currently supports the definition of variable and procedures as well as the eval
 
 [1] http://www.scheme-reports.org
 
-[2] http://http://www.antlr.org/
+[2] http://www.antlr.org/
 
 [3] https://jboss-javassist.github.io/javassist/
 
